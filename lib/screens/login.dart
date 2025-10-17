@@ -1,8 +1,53 @@
+import 'package:app_limiter/common/fetcher.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:art_sweetalert_new/art_sweetalert_new.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await Fetcher.post('/auth/login', {
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text.trim(),
+        'name': _nameController.text.trim(),
+      });
+
+      if (response['success'] == true) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      }
+    } catch (e) {
+      ArtSweetAlert.show(
+        context: context,
+        title: Text(e.toString()),
+        type: ArtAlertType.error,
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,55 +90,76 @@ class LoginScreen extends StatelessWidget {
                 const Text(
                   "Welcome back! Please sign in to continue.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFFB3B3B3),
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Color(0xFFB3B3B3), fontSize: 14),
                 ),
                 const SizedBox(height: 32),
 
-                // Email field
                 TextField(
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: 'you@example.com',
-                    hintStyle: const TextStyle(color: Color(0xFF7D7D89)),
-                    labelText: 'Email address',
-                    labelStyle: const TextStyle(color: Color(0xFFB3B3B3)),
+                    prefixIcon: const Icon(
+                      Icons.person,
+                      color: Color(0xFFB3B3B3),
+                    ),
+                    hintText: "Name",
+                    hintStyle: const TextStyle(color: Color(0xFF6E6E6E)),
                     filled: true,
-                    fillColor: const Color(0xFF191926),
+                    fillColor: const Color(0xFF1C1C28),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // Password field
+                TextField(
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: Color(0xFFB3B3B3),
+                    ),
+                    hintText: "Email",
+                    hintStyle: const TextStyle(color: Color(0xFF6E6E6E)),
+                    filled: true,
+                    fillColor: const Color(0xFF1C1C28),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 TextField(
                   obscureText: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: '********',
-                    hintStyle: const TextStyle(color: Color(0xFF7D7D89)),
-                    labelText: 'Password',
-                    labelStyle: const TextStyle(color: Color(0xFFB3B3B3)),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: Color(0xFFB3B3B3),
+                    ),
+                    hintText: "Password",
+                    hintStyle: const TextStyle(color: Color(0xFF6E6E6E)),
                     filled: true,
-                    fillColor: const Color(0xFF191926),
+                    fillColor: const Color(0xFF1C1C28),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 24),
 
                 // Tombol Login
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _isLoading ? null : _handleLogin();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1E00FF),
                       shape: RoundedRectangleBorder(
@@ -101,14 +167,16 @@ class LoginScreen extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text(
-                      "Login",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? CircularProgressIndicator(color: Colors.grey)
+                        : Text(
+                            "Login",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -117,10 +185,7 @@ class LoginScreen extends StatelessWidget {
                 Row(
                   children: const [
                     Expanded(
-                      child: Divider(
-                        color: Color(0xFF2A2A35),
-                        thickness: 1,
-                      ),
+                      child: Divider(color: Color(0xFF2A2A35), thickness: 1),
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
@@ -130,10 +195,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                     Expanded(
-                      child: Divider(
-                        color: Color(0xFF2A2A35),
-                        thickness: 1,
-                      ),
+                      child: Divider(color: Color(0xFF2A2A35), thickness: 1),
                     ),
                   ],
                 ),
@@ -152,10 +214,9 @@ class LoginScreen extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    icon: const FaIcon(
-                      FontAwesomeIcons.google,
-                      color: Colors.white,
-                      size: 18,
+                    icon: SvgPicture.network(
+                      'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg',
+                      height: 20,
                     ),
                     label: const Text(
                       "Sign in with Google",

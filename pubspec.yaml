@@ -35,6 +35,10 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   font_awesome_flutter: ^10.4.0
   cupertino_icons: ^1.0.8
+  http: ^1.2.2
+  flutter_svg: ^2.0.9
+  art_sweetalert_new: ^1.0.2
+  progress_bar: ^1.0.0
 
 dev_dependencies:
   flutter_test:

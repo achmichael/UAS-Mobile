@@ -1,7 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:art_sweetalert_new/art_sweetalert_new.dart';
+import 'package:app_limiter/common/fetcher.dart';
 
-class CreateAccountScreen extends StatelessWidget {
-  const CreateAccountScreen({super.key});
+class CreateAccount extends StatefulWidget {
+  const CreateAccount({super.key});
+
+  @override
+  State<CreateAccount> createState() => _CreateAccountState();
+}
+
+class _CreateAccountState extends State<CreateAccount> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await Fetcher.post('/auth/register', {
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text.trim(),
+        'name': _nameController.text.trim(),
+      });
+
+      if (response['success'] == true) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      }
+    } catch (e) {
+      ArtSweetAlert.show(
+        context: context,
+        title: Text(e.toString()),
+        type: ArtAlertType.error,
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,23 +62,19 @@ class CreateAccountScreen extends StatelessWidget {
         ),
         title: const Text(
           "App Limiter",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
-      body: Center( // ✅ konten di tengah
-        child: SingleChildScrollView( // ✅ agar tetap bisa di-scroll di layar kecil
+      body: Center(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center, // ✅ vertikal center
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 💡 Improved Heading
                 ShaderMask(
                   shaderCallback: (bounds) => const LinearGradient(
                     colors: [Color(0xFF1E00FF), Color(0xFF7A5FFF)],
@@ -53,18 +95,37 @@ class CreateAccountScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 const Text(
                   "Let's get you started!",
-                  style: TextStyle(
-                    color: Color(0xFFB3B3B3),
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Color(0xFFB3B3B3), fontSize: 14),
                 ),
                 const SizedBox(height: 32),
-
-                // 📧 Email field
                 TextField(
+                  controller: _nameController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFFB3B3B3)),
+                    prefixIcon: const Icon(
+                      Icons.person,
+                      color: Color(0xFFB3B3B3),
+                    ),
+                    hintText: "Name",
+                    hintStyle: const TextStyle(color: Color(0xFF6E6E6E)),
+                    filled: true,
+                    fillColor: const Color(0xFF1C1C28),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: _emailController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: Color(0xFFB3B3B3),
+                    ),
                     hintText: "Email",
                     hintStyle: const TextStyle(color: Color(0xFF6E6E6E)),
                     filled: true,
@@ -77,12 +138,15 @@ class CreateAccountScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // 🔒 Password field
                 TextField(
+                  controller: _passwordController,
                   obscureText: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFFB3B3B3)),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: Color(0xFFB3B3B3),
+                    ),
                     hintText: "Password",
                     hintStyle: const TextStyle(color: Color(0xFF6E6E6E)),
                     filled: true,
@@ -93,14 +157,13 @@ class CreateAccountScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
 
-                // 🔵 Create Account button
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/home');
+                      _handleRegister();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1E00FF),
@@ -109,47 +172,43 @@ class CreateAccountScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      "Create Account",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? CircularProgressIndicator()
+                        : const Text(
+                            "Create Account",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Divider
                 Row(
                   children: const [
                     Expanded(
-                      child: Divider(
-                        color: Color(0xFF2C2C3A),
-                        thickness: 1,
-                      ),
+                      child: Divider(color: Color(0xFF2C2C3A), thickness: 1),
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8.0),
                       child: Text(
                         "Or continue with",
-                        style: TextStyle(color: Color(0xFFB3B3B3), fontSize: 13),
+                        style: TextStyle(
+                          color: Color(0xFFB3B3B3),
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                     Expanded(
-                      child: Divider(
-                        color: Color(0xFF2C2C3A),
-                        thickness: 1,
-                      ),
+                      child: Divider(color: Color(0xFF2C2C3A), thickness: 1),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                // 🔘 Google Sign-In Button
                 OutlinedButton.icon(
                   onPressed: () {},
-                  icon: Image.network(
+                  icon: SvgPicture.network(
                     'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg',
                     height: 20,
                   ),
@@ -162,13 +221,14 @@ class CreateAccountScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 20,
+                    ),
                     backgroundColor: const Color(0xFF1C1C28),
                   ),
                 ),
                 const SizedBox(height: 30),
-
-                // 🔗 Footer
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -180,7 +240,7 @@ class CreateAccountScreen extends StatelessWidget {
                       onTap: () {
                         Navigator.pushNamed(context, '/login');
                       },
-                      child: const Text(
+                      child: Text(
                         "Sign in",
                         style: TextStyle(
                           color: Color(0xFF1E00FF),
