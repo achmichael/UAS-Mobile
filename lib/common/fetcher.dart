@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class Fetcher {
   static const String baseUrl =
-      "http://192.168.1.19:5000/api"; // ganti sesuai backend kamu
+      "https://uas-mobile.achmichael.my.id/api"; // ganti sesuai backend kamu
 
   static Future<dynamic> get(
     String endpoint, {

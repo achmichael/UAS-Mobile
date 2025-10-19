@@ -1,3 +1,4 @@
+import 'package:app_limiter/screens/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'screens/get_started.dart';
 import 'screens/login.dart';
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const GetStarted(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const CreateAccount(),
+        '/dashboard': (context) => const Dashboard()
       },
     );
   }
