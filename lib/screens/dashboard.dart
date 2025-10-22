@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:progress_bar/progress_bar.dart';
-import 'package:app_limiter/common/app.dart';
+import 'package:app_limiter/core/common/app.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});

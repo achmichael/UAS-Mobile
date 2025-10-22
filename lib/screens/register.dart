@@ -1,7 +1,9 @@
+import 'package:app_limiter/core/common/token_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:art_sweetalert_new/art_sweetalert_new.dart';
-import 'package:app_limiter/common/fetcher.dart';
+import 'package:app_limiter/core/common/fetcher.dart';
+import 'package:app_limiter/core/common/context_extensions.dart';
 
 class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
@@ -11,6 +13,8 @@ class CreateAccount extends StatefulWidget {
 }
 
 class _CreateAccountState extends State<CreateAccount> {
+  final tokenManager = TokenManager.instance;
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -36,9 +40,11 @@ class _CreateAccountState extends State<CreateAccount> {
       });
 
       if (response['success'] == true) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        await tokenManager.setTokens(response['token']);
+        safePushReplacementNamed('/dashboard');
       }
     } catch (e) {
+      if (!mounted) return;
       ArtSweetAlert.show(
         context: context,
         title: Text(e.toString()),

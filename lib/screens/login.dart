@@ -1,7 +1,10 @@
-import 'package:app_limiter/common/fetcher.dart';
+import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:art_sweetalert_new/art_sweetalert_new.dart';
+import 'package:app_limiter/core/constants/app_colors.dart';
+import 'package:app_limiter/core/common/token_manager.dart';
+import 'package:app_limiter/core/common/context_extensions.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +14,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final tokenManager = TokenManager.instance;
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -36,9 +41,12 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       if (response['success'] == true) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        await tokenManager.setTokens(response['token']);
+        safePushReplacementNamed('/dashboard');
       }
+      
     } catch (e) {
+      if (!mounted) return;
       ArtSweetAlert.show(
         context: context,
         title: Text(e.toString()),
@@ -52,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D14),
+      backgroundColor: AppColors.secondary,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -64,12 +72,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E00FF).withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.lock_outline,
-                    color: Color(0xFF1E00FF),
+                    color: AppColors.primary,
                     size: 50,
                   ),
                 ),
@@ -90,22 +98,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text(
                   "Welcome back! Please sign in to continue.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFFB3B3B3), fontSize: 14),
+                  style: TextStyle(color: AppColors.muted, fontSize: 14),
                 ),
                 const SizedBox(height: 32),
 
                 TextField(
                   controller: _nameController,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: AppColors.white),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(
                       Icons.person,
-                      color: Color(0xFFB3B3B3),
+                      color: AppColors.muted,
                     ),
                     hintText: "Name",
-                    hintStyle: const TextStyle(color: Color(0xFF6E6E6E)),
+                    hintStyle: const TextStyle(color: AppColors.fillText),
                     filled: true,
-                    fillColor: const Color(0xFF1C1C28),
+                    fillColor: AppColors.bgFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -120,12 +128,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     prefixIcon: const Icon(
                       Icons.email_outlined,
-                      color: Color(0xFFB3B3B3),
+                      color: AppColors.muted,
                     ),
                     hintText: "Email",
-                    hintStyle: const TextStyle(color: Color(0xFF6E6E6E)),
+                    hintStyle: const TextStyle(color: AppColors.fillText),
                     filled: true,
-                    fillColor: const Color(0xFF1C1C28),
+                    fillColor: AppColors.bgFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -137,16 +145,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: AppColors.white),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(
                       Icons.lock_outline,
-                      color: Color(0xFFB3B3B3),
+                      color: AppColors.muted,
                     ),
                     hintText: "Password",
-                    hintStyle: const TextStyle(color: Color(0xFF6E6E6E)),
+                    hintStyle: const TextStyle(color: AppColors.fillText),
                     filled: true,
-                    fillColor: const Color(0xFF1C1C28),
+                    fillColor: AppColors.bgFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -164,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _isLoading ? null : _handleLogin();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E00FF),
+                      backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -188,17 +196,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   children: const [
                     Expanded(
-                      child: Divider(color: Color(0xFF2A2A35), thickness: 1),
+                      child: Divider(color: AppColors.bgFill, thickness: 1),
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         "Or continue with",
-                        style: TextStyle(color: Color(0xFF7D7D89)),
+                        style: TextStyle(color: AppColors.muted),
                       ),
                     ),
                     Expanded(
-                      child: Divider(color: Color(0xFF2A2A35), thickness: 1),
+                      child: Divider(color: AppColors.bgFill, thickness: 1),
                     ),
                   ],
                 ),
