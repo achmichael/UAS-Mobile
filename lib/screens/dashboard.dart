@@ -1,9 +1,12 @@
 import 'package:app_limiter/core/constants/app_colors.dart';
+import 'package:app_usage/app_usage.dart';
 import 'package:flutter/material.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:progress_bar/progress_bar.dart';
 import 'package:app_limiter/core/common/app.dart';
 import 'package:app_limiter/components/appbar.dart';
+import 'package:app_limiter/core/common/app_usage.dart';
+import 'package:app_limiter/core/common/screen_time.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -13,9 +16,24 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  List<AppUsageInfo> apps = [];
   @override
   void initState() {
     super.initState();
+    _loadAppUsage();
+    (() async {
+      await requestScreenTimePermission();
+    })();
+  }
+
+  Future<void> _loadAppUsage() async {
+    final data = await AppUsageUtils.getTodayUsage();
+
+    print('data pengunaan aplikasi: $data');
+    setState(() {
+      apps = data;
+      // loading = false;
+    });
   }
 
   @override
