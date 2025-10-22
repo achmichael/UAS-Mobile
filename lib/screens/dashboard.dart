@@ -11,7 +11,7 @@ import 'package:app_limiter/core/common/screen_time.dart';
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
 
-  @override
+  @override 
   State<Dashboard> createState() => _DashboardState();
 }
 
@@ -24,6 +24,8 @@ class _DashboardState extends State<Dashboard> {
     (() async {
       await requestScreenTimePermission();
     })();
+
+
   }
 
   Future<void> _loadAppUsage() async {

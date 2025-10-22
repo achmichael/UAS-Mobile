@@ -1,1 +1,6 @@
-<string name="accessibility_service_description">This service monitors app usage in real-time and provides detailed information about the apps you use.</string>
+<resources>
+    <string name="app_name">app_limiter</string>
+    <string name="accessibility_service_description">
+        This service monitors app usage in real-time and provides detailed information about the apps you use.
+    </string>
+</resources>
