@@ -28,7 +28,9 @@ class _ScreenTimeBarState extends State<ScreenTimeBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(top: 10, left: 25, right: 25, bottom: 10),
+      color: AppColors.navyTone,
+      margin: EdgeInsets.only(top: 5, bottom: 5, left: 20, right: 20),
+      padding: EdgeInsets.only(top: 10, left: 15, right: 15, bottom: 10),
       child: Column(
         children: [
           Row(

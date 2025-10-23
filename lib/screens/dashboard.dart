@@ -41,11 +41,11 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.secondary,
+      backgroundColor: AppColors.darkNavy,
       appBar: CustomAppBar(
         title: 'Dashboard',
         onSettingsPressed: () {
-          
+
         },
       ),
       body: Center(
