@@ -47,6 +47,7 @@ class _DashboardState extends State<Dashboard> {
         onSettingsPressed: () {
 
         },
+        backgroundColor: AppColors.darkNavy,
       ),
       body: Center(
         child: Column(

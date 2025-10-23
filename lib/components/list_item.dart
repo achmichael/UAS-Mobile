@@ -141,7 +141,7 @@ class _ListItemState extends State<ListItem> {
                       selectedCategory = category;
                     });
                   },
-                  backgroundColor: const Color(0xFF1E293B),
+                  backgroundColor: AppColors.darkNavy,
                   selectedColor: AppColors.primary,
                   checkmarkColor: Colors.white,
                   side: BorderSide.none,
@@ -180,7 +180,7 @@ class _ListItemState extends State<ListItem> {
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.darkNavy,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
