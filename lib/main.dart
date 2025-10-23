@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'screens/get_started.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
+import 'screens/limits.dart';
+import 'screens/profile.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,7 +26,9 @@ class MyApp extends StatelessWidget {
         '/': (context) => const GetStarted(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const CreateAccount(),
-        '/dashboard': (context) => const Dashboard()
+        '/dashboard': (context) => const Dashboard(),
+        '/limits': (context) => const LimitsScreen(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }
