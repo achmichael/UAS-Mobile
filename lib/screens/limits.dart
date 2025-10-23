@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_limiter/core/constants/app_colors.dart';
 import 'package:app_limiter/components/appbar.dart';
+import 'package:app_limiter/core/common/navigation_helper.dart';
 
 class LimitsScreen extends StatefulWidget {
   const LimitsScreen({super.key});
@@ -14,18 +15,15 @@ class _LimitsScreenState extends State<LimitsScreen> {
 
   void _onTabTapped(int index) {
     if (index == 0) {
-      // Navigate to Dashboard
-      Navigator.pushNamed(context, '/dashboard');
+      context.navigateToNamed('/dashboard');
     } else if (index == 1) {
-      // Already on Limits, do nothing
       if (_currentIndex != 1) {
         setState(() {
           _currentIndex = 1;
         });
       }
     } else if (index == 2) {
-      // Navigate to Profile
-      Navigator.pushNamed(context, '/profile');
+      context.navigateToNamed('/profile');
     }
   }
 

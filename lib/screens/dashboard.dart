@@ -6,6 +6,7 @@ import 'package:app_limiter/components/appbar.dart';
 import 'package:app_limiter/core/common/screen_time.dart';
 import 'package:app_limiter/components/list_item.dart';
 import 'package:app_limiter/components/screen_time_bar.dart';
+import 'package:app_limiter/core/common/navigation_helper.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -47,9 +48,9 @@ class _DashboardState extends State<Dashboard> {
         });
       }
     } else if (index == 1) {
-      Navigator.pushNamed(context, '/limits');
+      context.navigateToNamed('/limits');
     } else if (index == 2) {
-      Navigator.pushNamed(context, '/profile');
+      context.navigateToNamed('/profile');
     }
   }
 
@@ -70,10 +71,9 @@ class _DashboardState extends State<Dashboard> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.navyTone,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: AppColors.navyTone.withOpacity(0.2),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),

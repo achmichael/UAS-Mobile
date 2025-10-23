@@ -5,6 +5,7 @@ import 'package:art_sweetalert_new/art_sweetalert_new.dart';
 import 'package:app_limiter/core/constants/app_colors.dart';
 import 'package:app_limiter/core/common/token_manager.dart';
 import 'package:app_limiter/core/common/context_extensions.dart';
+import 'package:app_limiter/core/common/navigation_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -252,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/register');
+                        context.navigateToNamed('/register');
                       },
                       child: const Text(
                         "Create Account",

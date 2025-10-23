@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app_limiter/core/common/navigation_helper.dart';
 
 class GetStarted extends StatelessWidget {
   const GetStarted({super.key});
@@ -68,7 +69,7 @@ class GetStarted extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/login');
+                    context.navigateToNamed('/login');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E00FF),

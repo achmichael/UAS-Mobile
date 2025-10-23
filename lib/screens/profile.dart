@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_limiter/core/constants/app_colors.dart';
 import 'package:app_limiter/components/appbar.dart';
+import 'package:app_limiter/core/common/navigation_helper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,13 +15,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _onTabTapped(int index) {
     if (index == 0) {
-      // Navigate to Dashboard
-      Navigator.pushNamed(context, '/dashboard');
+      context.navigateToNamed('/dashboard');
     } else if (index == 1) {
-      // Navigate to Limits
-      Navigator.pushNamed(context, '/limits');
+      context.navigateToNamed('/limits');
     } else if (index == 2) {
-      // Already on Profile, do nothing
       if (_currentIndex != 2) {
         setState(() {
           _currentIndex = 2;

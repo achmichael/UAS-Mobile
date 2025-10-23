@@ -1,6 +1,5 @@
 import 'package:screen_time/screen_time.dart';
 import 'package:flutter/services.dart';
-import 'package:app_limiter/core/common/helper.dart';
 
 const platform = MethodChannel('com.example.app_limiter');
 
