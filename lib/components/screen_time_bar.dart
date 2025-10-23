@@ -30,7 +30,7 @@ class _ScreenTimeBarState extends State<ScreenTimeBar> {
     return Container(
       color: AppColors.navyTone,
       margin: EdgeInsets.only(top: 5, bottom: 5, left: 20, right: 20),
-      padding: EdgeInsets.only(top: 10, left: 15, right: 15, bottom: 10),
+      padding: EdgeInsets.only(top: 15, left: 15, right: 15, bottom: 15),
       child: Column(
         children: [
           Row(
