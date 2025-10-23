@@ -15,12 +15,10 @@ class _ListItemState extends State<ListItem> {
   String selectedCategory = 'All';
   final List<String> categories = ['All', 'Social', 'Games', 'Ent.', 'Productivity'];
 
-  // Map kategori berdasarkan package name atau app name
   String _getCategoryForApp(String packageName, String appName) {
     final lowerPackage = packageName.toLowerCase();
     final lowerName = appName.toLowerCase();
 
-    // Social apps
     if (lowerPackage.contains('facebook') ||
         lowerPackage.contains('instagram') ||
         lowerPackage.contains('twitter') ||
@@ -31,14 +29,12 @@ class _ListItemState extends State<ListItem> {
       return 'Social';
     }
 
-    // Games
     if (lowerPackage.contains('game') ||
         lowerPackage.contains('play') ||
         lowerName.contains('game')) {
       return 'Games';
     }
 
-    // Entertainment
     if (lowerPackage.contains('spotify') ||
         lowerPackage.contains('youtube') ||
         lowerPackage.contains('netflix') ||
@@ -47,7 +43,6 @@ class _ListItemState extends State<ListItem> {
       return 'Ent.';
     }
 
-    // Productivity
     if (lowerPackage.contains('chrome') ||
         lowerPackage.contains('calendar') ||
         lowerPackage.contains('gmail') ||
@@ -58,7 +53,7 @@ class _ListItemState extends State<ListItem> {
       return 'Productivity';
     }
 
-    return 'Productivity'; // Default
+    return 'Productivity'; 
   }
 
   List<AppUsageWithIcon> _getFilteredItems() {
@@ -105,7 +100,6 @@ class _ListItemState extends State<ListItem> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Text(
@@ -117,8 +111,6 @@ class _ListItemState extends State<ListItem> {
             ),
           ),
         ),
-
-        // Category Filter Chips
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -133,6 +125,7 @@ class _ListItemState extends State<ListItem> {
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.grey[400],
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontSize: 16
                     ),
                   ),
                   selected: isSelected,
@@ -216,13 +209,14 @@ class _ListItemState extends State<ListItem> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  item.appName,
+                                  item.appName[0].toUpperCase() + item.appName.substring(1),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: AppColors.white,
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.w600,
+                                    
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -230,7 +224,7 @@ class _ListItemState extends State<ListItem> {
                                   _getCategoryForApp(item.packageName, item.appName),
                                   style: TextStyle(
                                     color: Colors.grey[400],
-                                    fontSize: 13,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ],

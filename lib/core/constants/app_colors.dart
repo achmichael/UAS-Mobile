@@ -11,5 +11,5 @@ class AppColors {
   static const Color fillText = Color(0xFF6E6E6E);
   static const Color bgFill = Color(0xFF1C1C28);
   static const Color darkNavy = Color(0xFF0F1122);
-  static const Color navyTone = Color(0xFF1A1C36);
+  static const Color navyTone = Color.fromARGB(255, 15, 17, 44);
 }
