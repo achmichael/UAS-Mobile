@@ -43,6 +43,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   app_usage: ^4.0.1
   screen_time: ^0.10.2
+  collection: ^1.19.1
 
 dev_dependencies:
   flutter_test:
