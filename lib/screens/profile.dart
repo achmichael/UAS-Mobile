@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:app_limiter/core/constants/app_colors.dart';
-import 'package:app_limiter/components/appbar.dart';
 import 'package:app_limiter/core/common/navigation_helper.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -12,6 +11,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   int _currentIndex = 2;
+  bool _notificationsEnabled = true;
+  String _currentTheme = 'Dark';
 
   void _onTabTapped(int index) {
     if (index == 0) {
@@ -27,22 +28,273 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _onNotificationToggle(bool value) {
+    setState(() {
+      _notificationsEnabled = value;
+    });
+    print('Notifications enabled: $value');
+  }
+
+  void _onThemeToggle() {
+    setState(() {
+      _currentTheme = _currentTheme == 'Dark' ? 'Light' : 'Dark';
+    });
+    print('Theme changed to: $_currentTheme');
+  }
+
+  void _onEditProfilePicture() {
+    print('Edit profile picture');
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1D3A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Logout',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to sign out of your account?',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Add logout logic here
+                print('User logged out');
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkNavy,
-      appBar: CustomAppBar(
-        title: 'Profile',
-        onSettingsPressed: () {},
-        backgroundColor: AppColors.darkNavy,
-      ),
-      body: const Center(
-        child: Text(
-          'Profile Page',
+      backgroundColor: const Color(0xFF0B0E25),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0B0E25),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Profile',
           style: TextStyle(
-            color: AppColors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+          child: Column(
+            children: [
+              // Profile Picture Section
+              Center(
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.primary,
+                          width: 3,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: Image.network(
+                          'https://via.placeholder.com/150',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: const Color(0xFF1A1D3A),
+                              child: const Icon(
+                                Icons.person,
+                                size: 60,
+                                color: AppColors.primary,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _onEditProfilePicture,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF0B0E25),
+                              width: 3,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // User Name
+              const Text(
+                'John Doe',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // User Email
+              Text(
+                'john.doe@example.com',
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 40),
+              // Settings Section Header
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'SETTINGS',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Notifications Setting
+              _buildSettingCard(
+                icon: Icons.notifications_outlined,
+                title: 'Notifications',
+                subtitle: 'Manage your app alerts',
+                trailing: Switch(
+                  value: _notificationsEnabled,
+                  onChanged: _onNotificationToggle,
+                  activeColor: AppColors.primary,
+                  activeTrackColor: AppColors.primary.withOpacity(0.5),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Theme Setting
+              _buildSettingCard(
+                icon: Icons.palette_outlined,
+                title: 'Theme',
+                subtitle: 'Dark or Light mode',
+                trailing: TextButton(
+                  onPressed: _onThemeToggle,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    backgroundColor: AppColors.primary.withOpacity(0.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    _currentTheme,
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Privacy Setting
+              _buildSettingCard(
+                icon: Icons.lock_outline,
+                title: 'Privacy',
+                subtitle: 'Manage your privacy settings',
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.grey,
+                  size: 18,
+                ),
+                onTap: () => print('Navigate to Privacy settings'),
+              ),
+              const SizedBox(height: 12),
+              // Help & Support Setting
+              _buildSettingCard(
+                icon: Icons.help_outline,
+                title: 'Help & Support',
+                subtitle: 'Get help and contact us',
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.grey,
+                  size: 18,
+                ),
+                onTap: () => print('Navigate to Help & Support'),
+              ),
+              const SizedBox(height: 12),
+              // Logout Setting
+              _buildSettingCard(
+                icon: Icons.logout,
+                iconColor: Colors.red,
+                title: 'Logout',
+                subtitle: 'Sign out of your account',
+                trailing: const Icon(
+                  Icons.exit_to_app,
+                  color: Colors.red,
+                  size: 24,
+                ),
+                onTap: _showLogoutDialog,
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
@@ -108,6 +360,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSettingCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Widget trailing,
+    Color iconColor = AppColors.primary,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF141833),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: iconColor,
+            size: 24,
+          ),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            subtitle,
+            style: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 13,
+            ),
+          ),
+        ),
+        trailing: trailing,
+        onTap: onTap,
       ),
     );
   }
