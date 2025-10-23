@@ -92,7 +92,7 @@ class _ListItemState extends State<ListItem> {
       case 'Ent.':
         return Colors.green;
       case 'Productivity':
-        return Colors.blue;
+        return AppColors.primary;
       default:
         return Colors.grey;
     }
