@@ -39,52 +39,18 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
-  Widget _getPage(int index) {
-    switch (index) {
-      case 0:
-        return _buildHomePage();
-      case 1:
-        return _buildLimitsPage();
-      case 2:
-        return _buildProfilePage();
-      default:
-        return _buildHomePage();
+  void _onTabTapped(int index) {
+    if (index == 0) {
+      if (_currentIndex != 0) {
+        setState(() {
+          _currentIndex = 0;
+        });
+      }
+    } else if (index == 1) {
+      Navigator.pushNamed(context, '/limits');
+    } else if (index == 2) {
+      Navigator.pushNamed(context, '/profile');
     }
-  }
-
-  Widget _buildHomePage() {
-    return Column(
-      children: [
-        ScreenTimeBar(screenTime: screenTime),
-        Expanded(child: ListItem(items: apps)),
-      ],
-    );
-  }
-
-  Widget _buildLimitsPage() {
-    return const Center(
-      child: Text(
-        'Limits Page',
-        style: TextStyle(
-          color: AppColors.white,
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfilePage() {
-    return const Center(
-      child: Text(
-        'Profile Page',
-        style: TextStyle(
-          color: AppColors.white,
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
   }
 
   @override
@@ -92,16 +58,15 @@ class _DashboardState extends State<Dashboard> {
     return Scaffold(
       backgroundColor: AppColors.darkNavy,
       appBar: CustomAppBar(
-        title: _currentIndex == 0
-            ? 'Dashboard'
-            : _currentIndex == 1
-                ? 'Limits'
-                : 'Profile',
+        title: 'Dashboard',
         onSettingsPressed: () {},
         backgroundColor: AppColors.darkNavy,
       ),
-      body: Center(
-        child: _getPage(_currentIndex),
+      body: Column(
+        children: [
+          ScreenTimeBar(screenTime: screenTime),
+          Expanded(child: ListItem(items: apps)),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -114,37 +79,56 @@ class _DashboardState extends State<Dashboard> {
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.muted,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: _onTabTapped,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: AppColors.primary,
+              unselectedItemColor: AppColors.muted,
+              selectedFontSize: 12,
+              unselectedFontSize: 12,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 4.0),
+                    child: Icon(Icons.home_outlined),
+                  ),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 4.0),
+                    child: Icon(Icons.home),
+                  ),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 4.0),
+                    child: Icon(Icons.timer_outlined),
+                  ),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 4.0),
+                    child: Icon(Icons.timer),
+                  ),
+                  label: 'Limits',
+                ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 4.0),
+                    child: Icon(Icons.person_outline),
+                  ),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 4.0),
+                    child: Icon(Icons.person),
+                  ),
+                  label: 'Profile',
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.timer_outlined),
-              activeIcon: Icon(Icons.timer),
-              label: 'Limits',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
+          ),
         ),
       ),
     );
