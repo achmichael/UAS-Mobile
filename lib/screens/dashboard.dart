@@ -1,14 +1,11 @@
 import 'package:app_limiter/core/constants/app_colors.dart';
-import 'package:app_usage/app_usage.dart';
 import 'package:flutter/material.dart';
 import 'package:app_limiter/types/entities.dart';
-import 'package:installed_apps/app_info.dart';
-import 'package:progress_bar/progress_bar.dart';
 import 'package:app_limiter/core/common/app.dart';
 import 'package:app_limiter/components/appbar.dart';
-import 'package:app_limiter/core/common/app_usage.dart';
 import 'package:app_limiter/core/common/screen_time.dart';
 import 'package:app_limiter/components/list_item.dart';
+import 'package:app_limiter/components/screen_time_bar.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -19,12 +16,18 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   List<AppUsageWithIcon> apps = [];
+  Duration screenTime = Duration.zero;
+
   @override
   void initState() {
     super.initState();
     _loadAppUsage();
     (() async {
       await requestScreenTimePermission();
+      final result = await getScreenTimeToday();
+      setState(() {
+        screenTime = result;
+      });
     })();
   }
 
@@ -42,10 +45,17 @@ class _DashboardState extends State<Dashboard> {
       appBar: CustomAppBar(
         title: 'Dashboard',
         onSettingsPressed: () {
-          print('Settings di klik');
+          
         },
       ),
-      body: Center(child: ListItem(items: apps)),
+      body: Center(
+        child: Column(
+          children: [
+            ScreenTimeBar(screenTime: screenTime),
+            Expanded(child: ListItem(items: apps)),
+          ],
+        ),
+      ),
     );
   }
 }
