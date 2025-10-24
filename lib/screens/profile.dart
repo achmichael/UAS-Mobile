@@ -225,7 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 trailing: Switch(
                   value: _notificationsEnabled,
                   onChanged: _onNotificationToggle,
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   activeTrackColor: AppColors.primary.withOpacity(0.5),
                 ),
               ),
