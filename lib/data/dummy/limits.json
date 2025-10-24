@@ -1,0 +1,37 @@
+{
+  "page": "App Limits",
+  "description": "Set Daily Limits",
+  "categories": [
+    {
+      "name": "Social Media",
+      "type": "Social",
+      "isActive": true,
+      "limit": "2 hours"
+    },
+    {
+      "name": "Email",
+      "type": "Productivity",
+      "isActive": false,
+      "limit": "No limit"
+    },
+    {
+      "name": "Video Streaming",
+      "type": "Entertainment",
+      "isActive": true,
+      "limit": "1.5 hours"
+    },
+    {
+      "name": "Messaging",
+      "type": "Communication",
+      "isActive": false,
+      "limit": "No limit"
+    },
+    {
+      "name": "News Apps",
+      "type": "News",
+      "isActive": false,
+      "limit": "No limit"
+    }
+  ],
+  "lastUpdated": "2025-10-24T09:00:00Z"
+}
