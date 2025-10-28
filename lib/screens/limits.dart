@@ -39,9 +39,9 @@ class _LimitsScreenState extends State<LimitsScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading apps: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading apps: $e')));
       }
     }
   }
@@ -63,11 +63,17 @@ class _LimitsScreenState extends State<LimitsScreen> {
   String _getCategoryFromPackage(String packageName) {
     // Simple categorization based on package name
     if (packageName.contains('game')) return 'Games';
-    if (packageName.contains('social') || packageName.contains('facebook') || 
-        packageName.contains('instagram') || packageName.contains('twitter')) return 'Social';
-    if (packageName.contains('video') || packageName.contains('youtube') || 
-        packageName.contains('netflix')) return 'Entertainment';
-    if (packageName.contains('browser') || packageName.contains('chrome')) return 'Productivity';
+    if (packageName.contains('social') ||
+        packageName.contains('facebook') ||
+        packageName.contains('instagram') ||
+        packageName.contains('twitter'))
+      return 'Social';
+    if (packageName.contains('video') ||
+        packageName.contains('youtube') ||
+        packageName.contains('netflix'))
+      return 'Entertainment';
+    if (packageName.contains('browser') || packageName.contains('chrome'))
+      return 'Productivity';
     return 'Other';
   }
 
@@ -77,7 +83,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
         .where((entry) => entry.value)
         .map((entry) => entry.key)
         .toList();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Saved limits for ${appsWithLimits.length} apps'),
@@ -108,9 +114,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-              ),
+              child: CircularProgressIndicator(color: AppColors.primary),
             )
           : Column(
               children: [
@@ -147,8 +151,9 @@ class _LimitsScreenState extends State<LimitsScreen> {
                           itemCount: _apps.length,
                           itemBuilder: (context, index) {
                             final app = _apps[index];
-                            final isEnabled = _appLimits[app.packageName] ?? false;
-                            
+                            final isEnabled =
+                                _appLimits[app.packageName] ?? false;
+
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
@@ -174,8 +179,12 @@ class _LimitsScreenState extends State<LimitsScreen> {
                                         width: 48,
                                         height: 48,
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary.withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: AppColors.primary.withOpacity(
+                                            0.2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: const Icon(
                                           Icons.apps,
@@ -205,7 +214,8 @@ class _LimitsScreenState extends State<LimitsScreen> {
                                     });
                                   },
                                   activeColor: AppColors.primary,
-                                  activeTrackColor: AppColors.primary.withOpacity(0.5),
+                                  activeTrackColor: AppColors.primary
+                                      .withOpacity(0.5),
                                 ),
                               ),
                             );
