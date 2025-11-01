@@ -143,21 +143,6 @@ class _LimitsScreenState extends State<LimitsScreen> {
     }
   }
 
-  void _saveSettings() {
-    // Get list of apps with limits enabled
-    final appsWithLimits = _appLimits.entries
-        .where((entry) => entry.value)
-        .map((entry) => entry.key)
-        .toList();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Saved limits for ${appsWithLimits.length} apps'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -283,32 +268,6 @@ class _LimitsScreenState extends State<LimitsScreen> {
                             );
                           },
                         ),
-                ),
-                // Save button
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: _saveSettings,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Save',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),
