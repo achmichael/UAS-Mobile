@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:app_limiter/core/common/token_manager.dart';
 
 class Fetcher {
   static const String baseUrl =
@@ -52,7 +53,22 @@ class Fetcher {
   }
 
   static Map<String, String> _defaultHeaders(Map<String, String>? custom) {
-    return {'Content-Type': 'application/json', ...?custom};
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+    };
+    
+    // Add Authorization header if token exists
+    final token = TokenManager.instance.accessToken;
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    
+    // Merge custom headers (will override default headers if same key exists)
+    if (custom != null) {
+      headers.addAll(custom);
+    }
+    
+    return headers;
   }
 
   static dynamic _handleResponse(http.Response response) {

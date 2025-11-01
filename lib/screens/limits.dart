@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:app_limiter/core/constants/app_colors.dart';
 import 'package:app_limiter/core/common/navigation_helper.dart';
 import 'package:app_limiter/core/common/app.dart';
+import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:app_limiter/types/entities.dart';
+import 'package:app_limiter/components/limit_modal.dart';
 
 class LimitsScreen extends StatefulWidget {
   const LimitsScreen({super.key});
@@ -15,6 +17,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
   int _currentIndex = 1;
   List<AppUsageWithIcon> _apps = [];
   Map<String, bool> _appLimits = {};
+  Map<String, int> _appLimitMinutes = {}; // Store limit minutes for each app
   bool _isLoading = true;
 
   @override
@@ -28,7 +31,6 @@ class _LimitsScreenState extends State<LimitsScreen> {
       final apps = await getAppUsagesWithIcons();
       setState(() {
         _apps = apps;
-        // Initialize all apps with limit disabled by default
         for (var app in apps) {
           _appLimits[app.packageName] = false;
         }
@@ -75,6 +77,70 @@ class _LimitsScreenState extends State<LimitsScreen> {
     if (packageName.contains('browser') || packageName.contains('chrome'))
       return 'Productivity';
     return 'Other';
+  }
+
+  Future<void> _handleToggleChange(AppUsageWithIcon app, bool value) async {
+    if (value) {
+      final minutes = await LimitModal.show(
+        context: context,
+        appName: app.appName,
+        initialMinutes: _appLimitMinutes[app.packageName],
+        onSave: (minutes) async {
+          try {
+            // Token otomatis ditambahkan oleh Fetcher._defaultHeaders()
+            await Fetcher.post('/limits', {
+              'appName': app.appName,
+              'limitMinutes': minutes,
+            });
+            
+            setState(() {
+              _appLimits[app.packageName] = true;
+              _appLimitMinutes[app.packageName] = minutes;
+            });
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Limit set for ${app.appName}: $minutes minutes'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to set limit: ${e.toString()}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+
+            print(e);
+            rethrow;
+          }
+        },
+      );
+
+      // If user canceled or failed, keep toggle OFF
+      if (minutes == null) {
+        setState(() {
+          _appLimits[app.packageName] = false;
+        });
+      }
+    } else {
+      // Turn off limit
+      setState(() {
+        _appLimits[app.packageName] = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Limit removed for ${app.appName}'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
   void _saveSettings() {
@@ -208,11 +274,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
                                 ),
                                 trailing: Switch(
                                   value: isEnabled,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _appLimits[app.packageName] = value;
-                                    });
-                                  },
+                                  onChanged: (value) => _handleToggleChange(app, value),
                                   activeColor: AppColors.primary,
                                   activeTrackColor: AppColors.primary
                                       .withOpacity(0.5),

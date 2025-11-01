@@ -6,8 +6,6 @@ const platform = MethodChannel('com.example.app_limiter');
 Future<void> requestScreenTimePermission() async {
   final ScreenTime screenTime = ScreenTime();
   final status = await screenTime.permissionStatus();
-  print('is enabled: $status');
-
   if (status == ScreenTimePermissionStatus.approved) {
     print('✅ Permission granted');
   } else {

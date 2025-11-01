@@ -7,7 +7,7 @@ import 'package:collection/collection.dart'; // Tambahkan import ini
 
 Future<List<AppInfo>> getInstalledApps() async {
   List<AppInfo> apps = await InstalledApps.getInstalledApps(
-    excludeSystemApps: true,
+    excludeSystemApps: false,
     excludeNonLaunchableApps: false,
     withIcon: true,
   );

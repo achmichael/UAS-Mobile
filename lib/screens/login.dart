@@ -32,10 +32,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    safePushReplacementNamed('/dashboard');
-    return;
+    // safePushReplacementNamed('/dashboard');
+    // return;
     setState(() => _isLoading = true);
-
     try {
       final response = await Fetcher.post('/auth/login', {
         'email': _emailController.text.trim(),
