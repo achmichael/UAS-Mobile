@@ -3,4 +3,9 @@
     <string name="accessibility_service_description">
         This service monitors app usage in real-time and provides detailed information about the apps you use.
     </string>
+    <string name="app_blocked_icon">App Blocked Icon</string>
+    <string name="app_blocked_title">Time Limit Reached!</string>
+    <string name="blocked_app_placeholder">App Name</string>
+    <string name="app_blocked_message">You have reached your daily usage limit for this app. Take a break and try again tomorrow!</string>
+    <string name="go_to_home">Go to Home</string>
 </resources>

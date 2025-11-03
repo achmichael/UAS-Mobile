@@ -17,7 +17,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
   int _currentIndex = 1;
   List<AppUsageWithIcon> _apps = [];
   Map<String, bool> _appLimits = {};
-  Map<String, int> _appLimitMinutes = {}; // Store limit minutes for each app
+  Map<String, int> _appLimitMinutes = {}; // Store limit minutes for each app or label
   bool _isLoading = true;
 
   @override
@@ -28,18 +28,39 @@ class _LimitsScreenState extends State<LimitsScreen> {
 
   Future<void> _loadApps() async {
     try {
+      setState(() {
+        _isLoading = true;
+      });
+
       final apps = await getAppUsagesWithIcons();
+      final existingLimits = await _fetchExistingLimits();
+
+      final updatedLimits = <String, bool>{};
+      final updatedLimitMinutes = <String, int>{};
+
+      for (final app in apps) {
+        final limitMinutes = _findLimitMinutesForApp(existingLimits, app);
+        final hasLimit = limitMinutes != null;
+
+        updatedLimits[app.packageName] = hasLimit;
+        if (limitMinutes != null) {
+          _registerAppLimitKeys(app, limitMinutes, target: updatedLimitMinutes);
+        }
+      }
+
+      if (!mounted) return;
       setState(() {
         _apps = apps;
-        for (var app in apps) {
-          _appLimits[app.packageName] = false;
-        }
+        _appLimits = updatedLimits;
+        _appLimitMinutes = updatedLimitMinutes;
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -81,21 +102,25 @@ class _LimitsScreenState extends State<LimitsScreen> {
 
   Future<void> _handleToggleChange(AppUsageWithIcon app, bool value) async {
     if (value) {
+      final initialMinutes =
+          _appLimitMinutes[app.packageName] ?? _appLimitMinutes[app.appName];
+
       final minutes = await LimitModal.show(
         context: context,
         appName: app.appName,
-        initialMinutes: _appLimitMinutes[app.packageName],
+        initialMinutes: initialMinutes,
         onSave: (minutes) async {
           try {
             // Token otomatis ditambahkan oleh Fetcher._defaultHeaders()
             await Fetcher.post('/limits', {
-              'appName': app.appName,
+              'appName': app.packageName,
+              'displayName': app.appName,
               'limitMinutes': minutes,
             });
             
             setState(() {
               _appLimits[app.packageName] = true;
-              _appLimitMinutes[app.packageName] = minutes;
+              _registerAppLimitKeys(app, minutes);
             });
             
             if (mounted) {
@@ -132,6 +157,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
       // Turn off limit
       setState(() {
         _appLimits[app.packageName] = false;
+        _clearAppLimitKeys(app);
       });
       
       ScaffoldMessenger.of(context).showSnackBar(
@@ -250,13 +276,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                subtitle: Text(
-                                  _getCategoryFromPackage(app.packageName),
-                                  style: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: 13,
-                                  ),
-                                ),
+                                subtitle: _buildSubtitle(app, isEnabled),
                                 trailing: Switch(
                                   value: isEnabled,
                                   onChanged: (value) => _handleToggleChange(app, value),
@@ -335,5 +355,186 @@ class _LimitsScreenState extends State<LimitsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildSubtitle(AppUsageWithIcon app, bool isEnabled) {
+    final category = _getCategoryFromPackage(app.packageName);
+    final limitMinutes =
+        _appLimitMinutes[app.packageName] ?? _appLimitMinutes[app.appName];
+
+    if (!isEnabled || limitMinutes == null) {
+      return Text(
+        category,
+        style: TextStyle(
+          color: Colors.grey[400],
+          fontSize: 13,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          category,
+          style: TextStyle(
+            color: Colors.grey[400],
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Daily limit: $limitMinutes minute${limitMinutes == 1 ? '' : 's'}',
+          style: const TextStyle(
+            color: AppColors.primary,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<Map<String, int>> _fetchExistingLimits() async {
+    try {
+      final response = await Fetcher.get('/limits');
+
+      final List<dynamic> entries;
+      if (response is List) {
+        entries = response;
+      } else if (response is Map<String, dynamic>) {
+        if (response['data'] is List) {
+          entries = List<dynamic>.from(response['data']);
+        } else if (response['limits'] is List) {
+          entries = List<dynamic>.from(response['limits']);
+        } else {
+          entries = [];
+        }
+      } else {
+        entries = [];
+      }
+
+      final normalized = <String, int>{};
+
+      for (final entry in entries) {
+        if (entry is! Map) continue;
+        final mapEntry = Map<String, dynamic>.from(
+          entry.map(
+            (key, value) => MapEntry(key.toString(), value),
+          ),
+        );
+
+        final packageName = _extractString(mapEntry, const [
+          'packageName',
+          'package',
+          'appPackage',
+          'appName',
+        ]);
+
+        final displayName = _extractString(mapEntry, const [
+          'displayName',
+          'appLabel',
+          'title',
+          'appTitle',
+          'name',
+        ]);
+
+        final minutes = _extractMinutes(mapEntry, const [
+          'limitMinutes',
+          'minutes',
+          'limit',
+          'durationMinutes',
+          'duration',
+        ]);
+
+        if (minutes == null) {
+          continue;
+        }
+
+        void addKey(String? key) {
+          if (key == null || key.isEmpty) return;
+          normalized[key] = minutes;
+          normalized[key.toLowerCase()] = minutes;
+        }
+
+        addKey(packageName);
+        addKey(displayName);
+      }
+
+      return normalized;
+    } catch (e) {
+      return {};
+    }
+  }
+
+  int? _findLimitMinutesForApp(
+    Map<String, int> normalizedLimits,
+    AppUsageWithIcon app,
+  ) {
+    final candidates = <String>{
+      app.packageName,
+      app.packageName.toLowerCase(),
+      app.appName,
+      app.appName.toLowerCase(),
+    };
+
+    for (final key in candidates) {
+      final value = normalizedLimits[key];
+      if (value != null) {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+
+  void _registerAppLimitKeys(
+    AppUsageWithIcon app,
+    int minutes, {
+    Map<String, int>? target,
+  }) {
+    final destination = target ?? _appLimitMinutes;
+    destination[app.packageName] = minutes;
+    destination[app.appName] = minutes;
+    destination[app.packageName.toLowerCase()] = minutes;
+    destination[app.appName.toLowerCase()] = minutes;
+  }
+
+  void _clearAppLimitKeys(AppUsageWithIcon app) {
+    _appLimitMinutes.remove(app.packageName);
+    _appLimitMinutes.remove(app.appName);
+    _appLimitMinutes.remove(app.packageName.toLowerCase());
+    _appLimitMinutes.remove(app.appName.toLowerCase());
+  }
+
+  String? _extractString(Map<String, dynamic> source, List<String> keys) {
+    for (final key in keys) {
+      final value = source[key];
+      if (value is String && value.isNotEmpty) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  int? _extractMinutes(Map<String, dynamic> source, List<String> keys) {
+    for (final key in keys) {
+      final value = source[key];
+      final minutes = _asInt(value);
+      if (minutes != null) {
+        return minutes;
+      }
+    }
+    return null;
+  }
+
+  int? _asInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.round();
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 }

@@ -6,8 +6,15 @@ import 'screens/register.dart';
 import 'screens/limits.dart';
 import 'screens/profile.dart';
 import 'core/common/route_transitions.dart';
+import 'services/app_monitor_service.dart';
 
-void main() {
+void main() async {
+  // Ensure Flutter bindings are initialized
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize and start the background monitoring service
+  await AppMonitorService.initializeService();
+  
   runApp(const MyApp());
 }
 

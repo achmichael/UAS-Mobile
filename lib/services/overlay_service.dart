@@ -1,0 +1,53 @@
+import 'package:flutter/services.dart';
+
+/// Service to manage full-screen overlay for blocking apps
+/// Uses native Android System Alert Window to block app access
+class OverlayService {
+  static const MethodChannel _channel =
+      MethodChannel('com.example.app_limiter/overlay');
+
+  /// Show a full-screen blocking overlay for the specified app
+  /// This prevents user from interacting with the blocked app
+  /// 
+  /// [appName] - The package name of the app being blocked
+  Future<void> showCustomOverlay(String appName) async {
+    try {
+      await _channel.invokeMethod('showCustomOverlay', {
+        'appName': appName,
+      });
+      print('[Overlay] Showing overlay for: $appName');
+    } catch (e) {
+      print('[Overlay] Error showing overlay: $e');
+    }
+  }
+
+  /// Hide the currently displayed overlay
+  Future<void> hideOverlay() async {
+    try {
+      await _channel.invokeMethod('hideOverlay');
+      print('[Overlay] Overlay hidden');
+    } catch (e) {
+      print('[Overlay] Error hiding overlay: $e');
+    }
+  }
+
+  /// Check if overlay permission is granted
+  Future<bool> hasOverlayPermission() async {
+    try {
+      final bool? hasPermission = await _channel.invokeMethod('hasOverlayPermission');
+      return hasPermission ?? false;
+    } catch (e) {
+      print('[Overlay] Error checking overlay permission: $e');
+      return false;
+    }
+  }
+
+  /// Open system settings to grant overlay permission
+  Future<void> requestOverlayPermission() async {
+    try {
+      await _channel.invokeMethod('requestOverlayPermission');
+    } catch (e) {
+      print('[Overlay] Error requesting overlay permission: $e');
+    }
+  }
+}
