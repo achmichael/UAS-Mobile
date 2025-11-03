@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:app_limiter/core/constants/app_colors.dart';
 import 'package:app_limiter/core/common/navigation_helper.dart';
+import 'package:app_limiter/core/common/fetcher.dart';
+import 'package:app_limiter/core/common/multipart_fetcher.dart';
+import 'package:app_limiter/components/edit_profile_modal.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,6 +17,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _currentIndex = 2;
   bool _notificationsEnabled = true;
   String _currentTheme = 'Dark';
+  bool _isLoading = true;
+  
+  String _userName = 'Loading...';
+  String _userEmail = '';
+  String? _profileImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final response = await Fetcher.get('/auth/profile');
+      
+      if (response['success'] == true && response['user'] != null) {
+        setState(() {
+          _userName = response['user']['name'] ?? 'User';
+          _userEmail = response['user']['email'] ?? '';
+          _profileImageUrl = response['user']['profileImage'];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading profile: $e');
+      setState(() {
+        _userName = 'Error loading profile';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _handleUpdateProfile(String name, String email, File? imageFile) async {
+    try {
+      final response = await MultipartFetcher.updateProfileWithImage(
+        name: name,
+        email: email,
+        profileImage: imageFile,
+      );
+
+      if (response['success'] == true) {
+        setState(() {
+          _userName = response['user']['name'] ?? name;
+          _userEmail = response['user']['email'] ?? email;
+          _profileImageUrl = response['user']['profileImage'];
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      rethrow; 
+    }
+  }
+
+  void _showEditProfileModal() {
+    EditProfileModal.show(
+      context: context,
+      currentName: _userName,
+      currentEmail: _userEmail,
+      currentProfileImage: _profileImageUrl,
+      onSave: _handleUpdateProfile,
+    );
+  }
 
   void _onTabTapped(int index) {
     if (index == 0) {
@@ -40,10 +115,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _currentTheme = _currentTheme == 'Dark' ? 'Light' : 'Dark';
     });
     print('Theme changed to: $_currentTheme');
-  }
-
-  void _onEditProfilePicture() {
-    print('Edit profile picture');
   }
 
   void _showLogoutDialog() {
@@ -119,8 +190,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+            onPressed: _showEditProfileModal,
+            tooltip: 'Edit Profile',
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+              ),
+            )
+          : SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
           child: Column(
@@ -140,27 +224,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       child: ClipOval(
-                        child: Image.network(
-                          'https://via.placeholder.com/150',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: const Color(0xFF1A1D3A),
-                              child: const Icon(
-                                Icons.person,
-                                size: 60,
-                                color: AppColors.primary,
+                        child: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                            ? Image.network(
+                                'https://uas-mobile.achmichael.my.id$_profileImageUrl',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: const Color(0xFF1A1D3A),
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: AppColors.primary,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Container(
+                                color: const Color(0xFF1A1D3A),
+                                child: const Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: AppColors.primary,
+                                ),
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ),
                     Positioned(
                       bottom: 0,
                       right: 0,
                       child: GestureDetector(
-                        onTap: _onEditProfilePicture,
+                        onTap: _showEditProfileModal,
                         child: Container(
                           width: 36,
                           height: 36,
@@ -185,9 +278,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 20),
               // User Name
-              const Text(
-                'John Doe',
-                style: TextStyle(
+              Text(
+                _userName,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -196,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 8),
               // User Email
               Text(
-                'john.doe@example.com',
+                _userEmail,
                 style: TextStyle(
                   color: Colors.grey[400],
                   fontSize: 14,
@@ -218,42 +311,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
               // Notifications Setting
-              _buildSettingCard(
-                icon: Icons.notifications_outlined,
-                title: 'Notifications',
-                subtitle: 'Manage your app alerts',
-                trailing: Switch(
-                  value: _notificationsEnabled,
-                  onChanged: _onNotificationToggle,
-                  activeThumbColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withOpacity(0.5),
-                ),
-              ),
+              // _buildSettingCard(
+              //   icon: Icons.notifications_outlined,
+              //   title: 'Notifications',
+              //   subtitle: 'Manage your app alerts',
+              //   trailing: Switch(
+              //     value: _notificationsEnabled,
+              //     onChanged: _onNotificationToggle,
+              //     activeThumbColor: AppColors.primary,
+              //     activeTrackColor: AppColors.primary.withOpacity(0.5),
+              //   ),
+              // ),
               const SizedBox(height: 12),
               // Theme Setting
-              _buildSettingCard(
-                icon: Icons.palette_outlined,
-                title: 'Theme',
-                subtitle: 'Dark or Light mode',
-                trailing: TextButton(
-                  onPressed: _onThemeToggle,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    backgroundColor: AppColors.primary.withOpacity(0.2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    _currentTheme,
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
+              // _buildSettingCard(
+              //   icon: Icons.palette_outlined,
+              //   title: 'Theme',
+              //   subtitle: 'Dark or Light mode',
+              //   trailing: TextButton(
+              //     onPressed: _onThemeToggle,
+              //     style: TextButton.styleFrom(
+              //       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              //       backgroundColor: AppColors.primary.withOpacity(0.2),
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(8),
+              //       ),
+              //     ),
+              //     child: Text(
+              //       _currentTheme,
+              //       style: const TextStyle(
+              //         color: AppColors.primary,
+              //         fontWeight: FontWeight.w600,
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(height: 12),
               // Privacy Setting
               _buildSettingCard(
                 icon: Icons.lock_outline,
