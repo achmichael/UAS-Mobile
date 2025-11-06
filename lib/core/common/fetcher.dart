@@ -59,6 +59,7 @@ class Fetcher {
     
     // Add Authorization header if token exists
     final token = TokenManager.instance.accessToken;
+    print('access token in fetcher: $token');
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
     }

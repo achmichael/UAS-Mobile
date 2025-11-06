@@ -4,6 +4,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'services/overlay_service.dart';
 import 'core/common/app.dart';
+import 'core/common/token_manager.dart';
 import 'screens/get_started.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
@@ -15,6 +16,7 @@ import 'services/app_monitor_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  await TokenManager.instance.loadTokens();
   await initializeBlockApp();
   final service = FlutterBackgroundService();
   final overlayService = OverlayService();

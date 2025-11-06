@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ui';
-import 'package:app_limiter/core/common/token_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:http/http.dart' as http;
+import 'package:app_limiter/core/common/limit_utils.dart';
 import 'package:app_limiter/services/usage_stats_service.dart';
-import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 const String appLimiterNotificationChannelId = 'app_limiter_notifications';
@@ -66,8 +63,9 @@ void onStart(ServiceInstance service) async {
 
   Timer.periodic(const Duration(seconds: 1), (timer) async {
     try {
-      final limitedApps = await _fetchLimits();
-      if (limitedApps.isEmpty) {
+      final limitsByKey = await _fetchLimits();
+      print('limitsByKey: $limitsByKey');
+      if (limitsByKey.isEmpty) {
         blockedApps.clear();
         return;
       }
@@ -76,16 +74,16 @@ void onStart(ServiceInstance service) async {
       print('foregroundApp: $foregroundApp');
       if (foregroundApp == null || foregroundApp.isEmpty) return;
 
-      final match = limitedApps.firstWhere(
-        (a) => a['appName'] == foregroundApp,
-        orElse: () => {},
+      final limit = findLimitMinutesForApp(
+        limitsByKey,
+        packageName: foregroundApp,
       );
 
-      print('match: $match');
-      if (match.isEmpty) return;
+      print('limit app: $limit');
+
+      if (limit == null) return;
 
       final todayMinutes = await usageStatsService.getAppUsageToday(foregroundApp);
-      final limit = match['limitMinutes'];
 
       print('todayMinutes: $todayMinutes');
       if (todayMinutes >= limit) {
@@ -110,24 +108,6 @@ void onStart(ServiceInstance service) async {
   });
 }
 
-Future<List<Map<String, dynamic>>> _fetchLimits() async {
-  try {
-    final prefs = TokenManager.instance;
-    final token = await prefs.getRefreshToken();
-    if (token == null) return [];
-
-    final response = await http.get(
-      Uri.parse('${Fetcher.baseUrl}/limits'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    final data = jsonDecode(response.body);
-    if (data is List) return List<Map<String, dynamic>>.from(data);
-    if (data is Map && data['data'] != null) return List<Map<String, dynamic>>.from(data['data']);
-    if (data is Map && data['limits'] != null) return List<Map<String, dynamic>>.from(data['limits']);
-
-    return [];
-  } catch (_) {
-    return [];
-  }
+Future<Map<String, int>> _fetchLimits() async {
+  return await fetchNormalizedLimits();
 }

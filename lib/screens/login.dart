@@ -43,7 +43,11 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       if (response['success'] == true) {
-        await tokenManager.setTokens(response['token']);
+        await tokenManager.setTokens(
+          response['token'],
+          saveRefreshToken: true,
+        );
+        print('token from login: ${response['token']}');
         safePushReplacementNamed('/dashboard');
       }
       

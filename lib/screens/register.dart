@@ -41,7 +41,10 @@ class _CreateAccountState extends State<CreateAccount> {
       });
 
       if (response['success'] == true) {
-        await tokenManager.setTokens(response['token']);
+        await tokenManager.setTokens(
+          response['token'],
+          saveRefreshToken: true,
+        );
         safePushReplacementNamed('/dashboard');
       }
     } catch (e) {

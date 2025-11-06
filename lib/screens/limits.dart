@@ -3,6 +3,7 @@ import 'package:app_limiter/core/constants/app_colors.dart';
 import 'package:app_limiter/core/common/navigation_helper.dart';
 import 'package:app_limiter/core/common/app.dart';
 import 'package:app_limiter/core/common/fetcher.dart';
+import 'package:app_limiter/core/common/limit_utils.dart';
 import 'package:app_limiter/types/entities.dart';
 import 'package:app_limiter/components/limit_modal.dart';
 
@@ -17,7 +18,8 @@ class _LimitsScreenState extends State<LimitsScreen> {
   int _currentIndex = 1;
   List<AppUsageWithIcon> _apps = [];
   Map<String, bool> _appLimits = {};
-  Map<String, int> _appLimitMinutes = {}; // Store limit minutes for each app or label
+  Map<String, int> _appLimitMinutes =
+      {}; 
   bool _isLoading = true;
 
   @override
@@ -33,15 +35,18 @@ class _LimitsScreenState extends State<LimitsScreen> {
       });
 
       final apps = await getAppUsagesWithIcons();
-      final existingLimits = await _fetchExistingLimits();
-
+      final existingLimits = await fetchNormalizedLimits();
+      print('existingLimits: $existingLimits');
       final updatedLimits = <String, bool>{};
       final updatedLimitMinutes = <String, int>{};
 
       for (final app in apps) {
-        final limitMinutes = _findLimitMinutesForApp(existingLimits, app);
+        final limitMinutes = findLimitMinutesForApp(
+          existingLimits,
+          packageName: app.packageName,
+          displayName: app.appName,
+        );
         final hasLimit = limitMinutes != null;
-        final packageName = app.usage;
         updatedLimits[app.packageName] = hasLimit;
         if (limitMinutes != null) {
           _registerAppLimitKeys(app, limitMinutes, target: updatedLimitMinutes);
@@ -111,22 +116,23 @@ class _LimitsScreenState extends State<LimitsScreen> {
         initialMinutes: initialMinutes,
         onSave: (minutes) async {
           try {
-            // Token otomatis ditambahkan oleh Fetcher._defaultHeaders()
             await Fetcher.post('/limits', {
               'appName': app.packageName,
               'displayName': app.appName,
               'limitMinutes': minutes,
             });
-            
+
             setState(() {
               _appLimits[app.packageName] = true;
               _registerAppLimitKeys(app, minutes);
             });
-            
+
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Limit set for ${app.appName}: $minutes minutes'),
+                  content: Text(
+                    'Limit set for ${app.appName}: $minutes minutes',
+                  ),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -159,7 +165,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
         _appLimits[app.packageName] = false;
         _clearAppLimitKeys(app);
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Limit removed for ${app.appName}'),
@@ -279,7 +285,8 @@ class _LimitsScreenState extends State<LimitsScreen> {
                                 subtitle: _buildSubtitle(app, isEnabled),
                                 trailing: Switch(
                                   value: isEnabled,
-                                  onChanged: (value) => _handleToggleChange(app, value),
+                                  onChanged: (value) =>
+                                      _handleToggleChange(app, value),
                                   activeColor: AppColors.primary,
                                   activeTrackColor: AppColors.primary
                                       .withOpacity(0.5),
@@ -365,10 +372,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
     if (!isEnabled || limitMinutes == null) {
       return Text(
         category,
-        style: TextStyle(
-          color: Colors.grey[400],
-          fontSize: 13,
-        ),
+        style: TextStyle(color: Colors.grey[400], fontSize: 13),
       );
     }
 
@@ -376,13 +380,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          category,
-          style: TextStyle(
-            color: Colors.grey[400],
-            fontSize: 13,
-          ),
-        ),
+        Text(category, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
         const SizedBox(height: 4),
         Text(
           'Daily limit: $limitMinutes minute${limitMinutes == 1 ? '' : 's'}',
@@ -395,100 +393,6 @@ class _LimitsScreenState extends State<LimitsScreen> {
       ],
     );
   }
-
-  Future<Map<String, int>> _fetchExistingLimits() async {
-    try {
-      final response = await Fetcher.get('/limits');
-
-      final List<dynamic> entries;
-      if (response is List) {
-        entries = response;
-      } else if (response is Map<String, dynamic>) {
-        if (response['data'] is List) {
-          entries = List<dynamic>.from(response['data']);
-        } else if (response['limits'] is List) {
-          entries = List<dynamic>.from(response['limits']);
-        } else {
-          entries = [];
-        }
-      } else {
-        entries = [];
-      }
-
-      final normalized = <String, int>{};
-
-      for (final entry in entries) {
-        if (entry is! Map) continue;
-        final mapEntry = Map<String, dynamic>.from(
-          entry.map(
-            (key, value) => MapEntry(key.toString(), value),
-          ),
-        );
-
-        final packageName = _extractString(mapEntry, const [
-          'packageName',
-          'package',
-          'appPackage',
-          'appName',
-        ]);
-
-        final displayName = _extractString(mapEntry, const [
-          'displayName',
-          'appLabel',
-          'title',
-          'appTitle',
-          'name',
-        ]);
-
-        final minutes = _extractMinutes(mapEntry, const [
-          'limitMinutes',
-          'minutes',
-          'limit',
-          'durationMinutes',
-          'duration',
-        ]);
-
-        if (minutes == null) {
-          continue;
-        }
-
-        void addKey(String? key) {
-          if (key == null || key.isEmpty) return;
-          normalized[key] = minutes;
-          normalized[key.toLowerCase()] = minutes;
-        }
-
-        addKey(packageName);
-        addKey(displayName);
-      }
-
-      return normalized;
-    } catch (e) {
-      return {};
-    }
-  }
-
-  int? _findLimitMinutesForApp(
-    Map<String, int> normalizedLimits,
-    AppUsageWithIcon app,
-  ) {
-    final candidates = <String>{
-      app.packageName,
-      app.packageName.toLowerCase(),
-      app.appName,
-      app.appName.toLowerCase(),
-    };
-
-    for (final key in candidates) {
-      final value = normalizedLimits[key];
-      if (value != null) {
-        return value;
-      }
-    }
-
-    return null;
-  }
-
 
   void _registerAppLimitKeys(
     AppUsageWithIcon app,
@@ -507,34 +411,5 @@ class _LimitsScreenState extends State<LimitsScreen> {
     _appLimitMinutes.remove(app.appName);
     _appLimitMinutes.remove(app.packageName.toLowerCase());
     _appLimitMinutes.remove(app.appName.toLowerCase());
-  }
-
-  String? _extractString(Map<String, dynamic> source, List<String> keys) {
-    for (final key in keys) {
-      final value = source[key];
-      if (value is String && value.isNotEmpty) {
-        return value;
-      }
-    }
-    return null;
-  }
-
-  int? _extractMinutes(Map<String, dynamic> source, List<String> keys) {
-    for (final key in keys) {
-      final value = source[key];
-      final minutes = _asInt(value);
-      if (minutes != null) {
-        return minutes;
-      }
-    }
-    return null;
-  }
-
-  int? _asInt(dynamic value) {
-    if (value == null) return null;
-    if (value is int) return value;
-    if (value is double) return value.round();
-    if (value is String) return int.tryParse(value);
-    return null;
   }
 }
