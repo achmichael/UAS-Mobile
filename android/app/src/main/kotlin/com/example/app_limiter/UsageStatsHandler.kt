@@ -10,16 +10,23 @@ import android.os.Build
 import android.provider.Settings
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.lang.ref.WeakReference
 import java.util.*
 
 /**
  * Handler for UsageStatsManager operations
  * Provides methods to query app usage statistics and detect foreground apps
  */
-class UsageStatsHandler(private val activity: Activity) {
+class UsageStatsHandler(private val appContext: Context) {
 
     private val usageStatsManager: UsageStatsManager? by lazy {
-        activity.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
+        appContext.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
+    }
+
+    private var activityRef: WeakReference<Activity?> = WeakReference(null)
+
+    fun updateActivity(activity: Activity?) {
+        activityRef = WeakReference(activity)
     }
 
     fun handleMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -173,19 +180,20 @@ class UsageStatsHandler(private val activity: Activity) {
      */
     private fun hasUsageAccessPermission(): Boolean {
         return try {
-            val appOps = activity.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            val appOps = appContext.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            val packageName = appContext.packageName
             val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 appOps.unsafeCheckOpNoThrow(
                     AppOpsManager.OPSTR_GET_USAGE_STATS,
                     android.os.Process.myUid(),
-                    activity.packageName
+                    packageName
                 )
             } else {
                 @Suppress("DEPRECATION")
                 appOps.checkOpNoThrow(
                     AppOpsManager.OPSTR_GET_USAGE_STATS,
                     android.os.Process.myUid(),
-                    activity.packageName
+                    packageName
                 )
             }
             mode == AppOpsManager.MODE_ALLOWED
@@ -199,6 +207,11 @@ class UsageStatsHandler(private val activity: Activity) {
      * Open the system settings page for usage access
      */
     private fun openUsageAccessSettings() {
+        val activity = activityRef.get()
+        if (activity == null) {
+            return
+        }
+
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         activity.startActivity(intent)

@@ -41,7 +41,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
       for (final app in apps) {
         final limitMinutes = _findLimitMinutesForApp(existingLimits, app);
         final hasLimit = limitMinutes != null;
-
+        final packageName = app.usage;
         updatedLimits[app.packageName] = hasLimit;
         if (limitMinutes != null) {
           _registerAppLimitKeys(app, limitMinutes, target: updatedLimitMinutes);

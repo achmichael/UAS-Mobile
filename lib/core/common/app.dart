@@ -1,9 +1,15 @@
+import 'package:app_limiter/components/overlay.dart';
 import 'package:app_limiter/core/common/app_usage.dart';
 import 'package:app_limiter/types/entities.dart';
 import 'package:app_usage/app_usage.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
-import 'package:collection/collection.dart'; // Tambahkan import ini
+import 'package:collection/collection.dart';
+import 'package:block_app/block_app.dart';
+import 'package:flutter/material.dart';
+
+// Global instance of BlockApp
+final BlockApp blockAppInstance = BlockApp();
 
 Future<List<AppInfo>> getInstalledApps() async {
   List<AppInfo> apps = await InstalledApps.getInstalledApps(
@@ -32,7 +38,6 @@ Future<List<AppUsageWithIcon>> getAppUsagesWithIcons() async {
       (app) => app.packageName == usage.packageName,
     );
 
-    // Jika package name tidak cocok, lewati
     if (matchedApp == null) continue;
 
     merged.add((
@@ -44,4 +49,53 @@ Future<List<AppUsageWithIcon>> getAppUsagesWithIcons() async {
   }
 
   return merged;
+}
+
+/// Block app when it reaches the usage limit
+/// This method should be called from the monitoring service
+Future<void> setBlockApp(String packageName) async {
+  try {
+    print('[BlockApp] Blocking app: $packageName');
+    await blockAppInstance.blockApp(packageName);
+    print('[BlockApp] Successfully blocked: $packageName');
+  } catch (e) {
+    print('[BlockApp] Error blocking app: $e');
+  }
+}
+
+/// Unblock a previously blocked app
+Future<void> unblockApp(String packageName) async {
+  try {
+    print('[BlockApp] Unblocking app: $packageName');
+    await blockAppInstance.unblockApp(packageName);
+    print('[BlockApp] Successfully unblocked: $packageName');
+  } catch (e) {
+    print('[BlockApp] Error unblocking app: $e');
+  }
+}
+
+/// Initialize BlockApp with custom configuration
+/// This should be called once during app startup in main.dart
+Future<void> initializeBlockApp() async {
+  try {
+    print('[BlockApp] Initializing BlockApp...');
+    
+    await blockAppInstance.initialize(
+      config: AppBlockConfig(
+        defaultMessage: 'This app has been blocked',
+        overlayBackgroundColor: Colors.black87,
+        overlayTextColor: Colors.white,
+        actionButtonText: 'Close',
+        autoStartService: true,
+        // Use custom overlay widget from components/overlay.dart
+        customOverlayBuilder: (context, packageName) {
+          return overlay;
+        },
+      ),
+    );
+    
+    print('[BlockApp] BlockApp initialized successfully');
+  } catch (e) {
+    print('[BlockApp] Error initializing BlockApp: $e');
+  }
 }
