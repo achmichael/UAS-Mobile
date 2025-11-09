@@ -1,10 +1,9 @@
-import 'package:flutter/services.dart';
+import 'package:app_limiter_plugin/app_limiter_plugin.dart';
 
 /// Service to manage full-screen overlay for blocking apps
 /// Uses native Android System Alert Window to block app access
 class OverlayService {
-  static const MethodChannel _channel =
-      MethodChannel('com.example.app_limiter/overlay');
+  final _plugin = AppLimiterPlugin();
 
   /// Show a full-screen blocking overlay for the specified app
   /// This prevents user from interacting with the blocked app
@@ -12,9 +11,7 @@ class OverlayService {
   /// [appName] - The package name of the app being blocked
   Future<void> showCustomOverlay(String appName) async {
     try {
-      await _channel.invokeMethod('showCustomOverlay', {
-        'appName': appName,
-      });
+      await _plugin.showCustomOverlay(appName);
       print('[Overlay] Showing overlay for: $appName');
     } catch (e) {
       print('[Overlay] Error showing overlay: $e');
@@ -24,7 +21,7 @@ class OverlayService {
   /// Hide the currently displayed overlay
   Future<void> hideOverlay() async {
     try {
-      await _channel.invokeMethod('hideOverlay');
+      await _plugin.hideOverlay();
       print('[Overlay] Overlay hidden');
     } catch (e) {
       print('[Overlay] Error hiding overlay: $e');
@@ -34,8 +31,8 @@ class OverlayService {
   /// Check if overlay permission is granted
   Future<bool> hasOverlayPermission() async {
     try {
-      final bool? hasPermission = await _channel.invokeMethod('hasOverlayPermission');
-      return hasPermission ?? false;
+      final bool hasPermission = await _plugin.hasOverlayPermission();
+      return hasPermission;
     } catch (e) {
       print('[Overlay] Error checking overlay permission: $e');
       return false;
@@ -45,7 +42,7 @@ class OverlayService {
   /// Open system settings to grant overlay permission
   Future<void> requestOverlayPermission() async {
     try {
-      await _channel.invokeMethod('requestOverlayPermission');
+      await _plugin.requestOverlayPermission();
     } catch (e) {
       print('[Overlay] Error requesting overlay permission: $e');
     }

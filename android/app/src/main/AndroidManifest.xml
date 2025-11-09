@@ -1,10 +1,10 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" 
+package="com.example.app_limiter">
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <!-- <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" /> -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -20,9 +20,18 @@
         <!-- Background Service for App Monitoring -->
         <service
             android:name="id.flutter.flutter_background_service.BackgroundService"
-            android:exported="true"
+            android:exported="false"
             android:foregroundServiceType="dataSync"
-            android:directBootAware="true"
+            tools:replace="android:exported,android:foregroundServiceType"
+            >
+        </service>
+        
+        <!-- App Blocking Service -->
+        <service
+            android:name="com.block_app.AppBlockingService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            tools:replace="android:exported,android:foregroundServiceType"
             >
         </service>
         
@@ -41,13 +50,13 @@
         </service>
         
         <!-- Boot Receiver to restart service after device reboot -->
-        <receiver
-            android:name="id.flutter.flutter_background_service.BootReceiver"
-            android:exported="true">
+        <!-- <receiver
+            android:name="com.sososdk.flutter_background_service.BackgroundServiceBootReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
-        </receiver>
+        </receiver> -->
         
         <activity
             android:name=".MainActivity"

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:app_limiter/core/common/limit_utils.dart';
 import 'package:app_limiter/services/usage_stats_service.dart';
+import 'package:app_limiter_plugin/app_limiter_plugin.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 const String appLimiterNotificationChannelId = 'app_limiter_notifications';
@@ -50,6 +51,8 @@ void onStart(ServiceInstance service) async {
   print('onstart started');
 
   final usageStatsService = UsageStatsService();
+  final overlayPlugin = AppLimiterPlugin();
+  
   if (service is AndroidServiceInstance) {
     service.setForegroundNotificationInfo(
       title: 'App Limiter Running',
@@ -88,7 +91,15 @@ void onStart(ServiceInstance service) async {
       print('todayMinutes: $todayMinutes');
       if (todayMinutes >= limit) {
         if (!blockedApps.contains(foregroundApp)) {
-          blockedApps.add(foregroundApp);          
+          blockedApps.add(foregroundApp);
+          
+          // Show overlay using plugin
+          try {
+            await overlayPlugin.showCustomOverlay(foregroundApp);
+          } catch (e) {
+            print('[AppMonitor] Error showing overlay: $e');
+          }
+          
           service.invoke(appLimitReachedEvent, {
             'appName': foregroundApp,
             'limitMinutes': limit,
@@ -98,13 +109,23 @@ void onStart(ServiceInstance service) async {
       } else {
         if (blockedApps.contains(foregroundApp)) {
           blockedApps.remove(foregroundApp);
+          
+          // Hide overlay using plugin
+          try {
+            await overlayPlugin.hideOverlay();
+          } catch (e) {
+            print('[AppMonitor] Error hiding overlay: $e');
+          }
+          
           service.invoke(appUnblockedEvent, {
             'appName': foregroundApp,
           });
           print('[AppMonitor] App unblocked: $foregroundApp');
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      print('[AppMonitor] Error in monitoring loop: $e');
+    }
   });
 }
 

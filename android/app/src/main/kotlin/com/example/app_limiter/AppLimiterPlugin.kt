@@ -37,7 +37,7 @@ class AppLimiterPlugin : FlutterPlugin, ActivityAware {
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         applicationContext = binding.applicationContext
-
+        println("AppLimiterPlugin attached to engine")
         overlayChannel = MethodChannel(binding.binaryMessenger, OVERLAY_CHANNEL).also { channel ->
             channel.setMethodCallHandler { call, result ->
                 val handler = getOverlayHandler()
@@ -49,6 +49,7 @@ class AppLimiterPlugin : FlutterPlugin, ActivityAware {
             }
         }
 
+        println("UsageStatsChannel created")
         usageStatsChannel = MethodChannel(binding.binaryMessenger, USAGE_STATS_CHANNEL).also { channel ->
             channel.setMethodCallHandler { call, result ->
                 val handler = getUsageStatsHandler()
@@ -60,6 +61,7 @@ class AppLimiterPlugin : FlutterPlugin, ActivityAware {
             }
         }
 
+        println("UsageAccessChannel created")
         usageAccessChannel = MethodChannel(binding.binaryMessenger, USAGE_ACCESS_CHANNEL).also { channel ->
             channel.setMethodCallHandler { call, result ->
                 handleUsageAccessCall(call, result)

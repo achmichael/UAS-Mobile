@@ -87,7 +87,6 @@ Future<void> initializeBlockApp() async {
         overlayTextColor: Colors.white,
         actionButtonText: 'Close',
         autoStartService: true,
-        // Use custom overlay widget from components/overlay.dart
         customOverlayBuilder: (context, packageName) {
           return overlay;
         },
