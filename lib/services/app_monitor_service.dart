@@ -57,10 +57,25 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
 
-  print('onstart started');
+  print('[AppMonitor] ========== SERVICE STARTED ==========');
 
   final usageStatsService = UsageStatsService();
   final overlayPlugin = AppLimiterPlugin();
+  
+  // Check overlay permission at service start
+  try {
+    final hasOverlayPermission = await overlayPlugin.hasOverlayPermission();
+    print('[AppMonitor] Overlay permission status: $hasOverlayPermission');
+    
+    if (!hasOverlayPermission) {
+      print('[AppMonitor] ⚠️ WARNING: Overlay permission not granted!');
+      print('[AppMonitor] Please grant overlay permission in app settings');
+    } else {
+      print('[AppMonitor] ✅ Overlay permission granted');
+    }
+  } catch (e) {
+    print('[AppMonitor] ❌ Error checking overlay permission: $e');
+  }
   
   if (service is AndroidServiceInstance) {
     service.setForegroundNotificationInfo(
@@ -75,6 +90,8 @@ void onStart(ServiceInstance service) async {
   service.on('stop').listen((event) => service.stopSelf());
 
   final Set<String> blockedApps = {};
+  
+  print('[AppMonitor] Starting monitoring loop...');
 
   Timer.periodic(const Duration(seconds: 1), (timer) async {
     try {
@@ -89,6 +106,21 @@ void onStart(ServiceInstance service) async {
       print('foregroundApp: $foregroundApp');
       if (foregroundApp == null || foregroundApp.isEmpty) return;
 
+      // IMPORTANT: Don't block the App Limiter app itself!
+      if (foregroundApp == 'com.example.app_limiter') {
+        print('[AppMonitor] ⚠️ Skipping - cannot block App Limiter itself!');
+        // Remove from blocked list if it was added by mistake
+        if (blockedApps.contains(foregroundApp)) {
+          blockedApps.remove(foregroundApp);
+          try {
+            await overlayPlugin.hideOverlay();
+          } catch (e) {
+            print('[AppMonitor] Error hiding overlay: $e');
+          }
+        }
+        return;
+      }
+
       final limit = findLimitMinutesForApp(
         limitsByKey,
         packageName: foregroundApp,
@@ -101,22 +133,49 @@ void onStart(ServiceInstance service) async {
       final todayMinutes = await usageStatsService.getAppUsageToday(foregroundApp);
 
       print('todayMinutes: $todayMinutes');
+      print('[AppMonitor] Comparison: $todayMinutes >= $limit = ${todayMinutes >= limit}');
+      
       if (todayMinutes >= limit) {
+        print('⚠️ App limit reached for duration $foregroundApp');
+        print('Already blocked apps: $blockedApps');
+        print('Is $foregroundApp already blocked? ${blockedApps.contains(foregroundApp)}');
+        
         if (!blockedApps.contains(foregroundApp)) {
           blockedApps.add(foregroundApp);
+          print('🔒 Blocking app: $foregroundApp');
+          print('Blocked apps after adding: $blockedApps');
           
           // Show overlay using plugin
           try {
+            print('📱 Calling showCustomOverlay for: $foregroundApp');
             await overlayPlugin.showCustomOverlay(foregroundApp);
+            print('✅ showCustomOverlay completed successfully');
           } catch (e) {
-            print('[AppMonitor] Error showing overlay: $e');
+            print('❌ [AppMonitor] Error showing overlay: $e');
+            print('Stack trace: ${StackTrace.current}');
           }
           
-          service.invoke(appLimitReachedEvent, {
-            'appName': foregroundApp,
-            'limitMinutes': limit,
-            'usageMinutes': todayMinutes,
-          });
+          // Invoke event to notify main app
+          try {
+            print('📢 Invoking appLimitReachedEvent');
+            service.invoke(appLimitReachedEvent, {
+              'appName': foregroundApp,
+              'limitMinutes': limit,
+              'usageMinutes': todayMinutes,
+            });
+            print('✅ Event invoked successfully');
+          } catch (e) {
+            print('❌ Error invoking event: $e');
+          }
+        } else {
+          // App is already blocked but still in foreground - ensure overlay is showing
+          print('ℹ️ $foregroundApp already blocked, ensuring overlay is visible...');
+          try {
+            // Re-show overlay to ensure it's still visible
+            await overlayPlugin.showCustomOverlay(foregroundApp);
+          } catch (e) {
+            print('❌ Error re-showing overlay: $e');
+          }
         }
       } else {
         if (blockedApps.contains(foregroundApp)) {

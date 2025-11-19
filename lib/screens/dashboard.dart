@@ -7,6 +7,7 @@ import 'package:app_limiter/core/common/screen_time.dart';
 import 'package:app_limiter/components/list_item.dart';
 import 'package:app_limiter/components/screen_time_bar.dart';
 import 'package:app_limiter/core/common/navigation_helper.dart';
+import 'package:app_limiter/components/permission_alert.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -25,6 +26,7 @@ class _DashboardState extends State<Dashboard> {
   void initState() {
     super.initState();
     _loadAppUsage();
+    _checkPermissions();
     (() async {
       await requestScreenTimePermission();
       final result = await getScreenTimeToday();
@@ -32,6 +34,15 @@ class _DashboardState extends State<Dashboard> {
         screenTime = result;
       });
     })();
+  }
+
+  Future<void> _checkPermissions() async {
+    // Wait a bit for the UI to be ready
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+    
+    // Check and request permissions using new dialog
+    await checkAndRequestAllPermissions(context);
   }
 
   Future<void> _loadAppUsage() async {
