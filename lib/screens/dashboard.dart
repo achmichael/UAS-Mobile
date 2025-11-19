@@ -36,6 +36,7 @@ class _DashboardState extends State<Dashboard> {
 
   Future<void> _loadAppUsage() async {
     final installedApps = await getAppUsagesWithIcons();
+    print('installedApps: $installedApps');
     setState(() {
       apps = installedApps;
     });

@@ -18,9 +18,23 @@ void main() async {
   
   await TokenManager.instance.loadTokens();
   await initializeBlockApp();
+  
+  runApp(const MyApp());
+  
+  // Initialize services after runApp to ensure Activity is ready
+  await _initializeServicesAfterAppStart();
+}
+
+Future<void> _initializeServicesAfterAppStart() async {
+  // Wait a brief moment to ensure the app and Activity are fully initialized
+  await Future.delayed(const Duration(milliseconds: 500));
+  
   final service = FlutterBackgroundService();
   final overlayService = OverlayService();
   final notifications = FlutterLocalNotificationsPlugin();
+  
+  // Initialize notifications plugin
+  await _initializeNotifications(notifications);
   await _setupNotificationChannel(notifications);
 
   service.on(appLimitReachedEvent).listen((event) async {
@@ -46,9 +60,11 @@ void main() async {
         android: AndroidNotificationDetails(
           appLimiterNotificationChannelId,
           'App Limiter',
-          ongoing: true,
+          channelDescription: 'Notifications for blocked apps',
           importance: Importance.high,
-          priority: Priority.high
+          priority: Priority.high,
+          ongoing: true,
+          icon: '@drawable/ic_notification',
         ),
       ),
     );
@@ -63,8 +79,23 @@ void main() async {
   });
   
   await initializeService();
+}
+
+Future<void> _initializeNotifications(FlutterLocalNotificationsPlugin notifications) async {
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@drawable/ic_notification');
   
-  runApp(const MyApp());
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+  );
+  
+  await notifications.initialize(
+    initializationSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse response) async {
+      // Handle notification tap
+      print('[Notification] Tapped: ${response.payload}');
+    },
+  );
 }
 
 Future<void> _setupNotificationChannel(FlutterLocalNotificationsPlugin notifications) async {

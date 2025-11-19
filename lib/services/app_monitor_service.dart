@@ -14,7 +14,14 @@ const _notificationId = 888;
 
 @pragma('vm:entry-point')
 Future<void> initializeService() async {
-  await Permission.notification.request();
+  // Request notification permission with error handling
+  try {
+    final status = await Permission.notification.request();
+    print('[AppMonitor] Notification permission status: $status');
+  } catch (e) {
+    print('[AppMonitor] Error requesting notification permission: $e');
+    // Continue even if permission request fails
+  }
 
   final service = FlutterBackgroundService();
 
@@ -26,6 +33,8 @@ Future<void> initializeService() async {
       autoStartOnBoot: true,
       notificationChannelId: appLimiterNotificationChannelId,
       foregroundServiceNotificationId: _notificationId,
+      initialNotificationTitle: 'App Limiter',
+      initialNotificationContent: 'Service is running',
     ),
     iosConfiguration: IosConfiguration(
       autoStart: true,
@@ -58,6 +67,9 @@ void onStart(ServiceInstance service) async {
       title: 'App Limiter Running',
       content: 'Monitoring usage...',
     );
+    
+    // Set notification with icon
+    service.setAsForegroundService();
   }
 
   service.on('stop').listen((event) => service.stopSelf());
