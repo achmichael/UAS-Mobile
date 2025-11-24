@@ -10,48 +10,21 @@ class GetStarted extends StatefulWidget {
 }
 
 class _GetStartedState extends State<GetStarted> {
-  bool _isCheckingAuth = true;
-
   @override
   void initState() {
     super.initState();
-    _checkAuthStatus();
+    _checkLogin();
   }
 
-  Future<void> _checkAuthStatus() async {
-    // Wait a bit for UI to render
-    await Future.delayed(const Duration(milliseconds: 300));
-    
-    // Check if user already has token (already logged in)
+  Future<void> _checkLogin() async {
     final token = await TokenManager.instance.getStoredAccessToken();
-    
-    if (token != null && token.isNotEmpty && mounted) {
+    if (token != null && mounted) {
       context.navigateAndRemoveAllNamed('/dashboard');
-    } else {
-      // No token found, show get started screen
-      if (mounted) {
-        setState(() {
-          _isCheckingAuth = false;
-        });
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while checking auth
-    if (_isCheckingAuth) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF0D0D14),
-        body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E00FF)),
-          ),
-        ),
-      );
-    }
-
-    // Show get started screen
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D14), // Background gelap
       body: SafeArea(
