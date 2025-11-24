@@ -1,11 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:app_limiter/core/common/navigation_helper.dart';
+import 'package:app_limiter/core/common/token_manager.dart';
 
-class GetStarted extends StatelessWidget {
+class GetStarted extends StatefulWidget {
   const GetStarted({super.key});
 
   @override
+  State<GetStarted> createState() => _GetStartedState();
+}
+
+class _GetStartedState extends State<GetStarted> {
+  bool _isCheckingAuth = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthStatus();
+  }
+
+  Future<void> _checkAuthStatus() async {
+    // Wait a bit for UI to render
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    // Check if user already has token (already logged in)
+    final token = await TokenManager.instance.getStoredAccessToken();
+    
+    if (token != null && token.isNotEmpty && mounted) {
+      context.navigateAndRemoveAllNamed('/dashboard');
+    } else {
+      // No token found, show get started screen
+      if (mounted) {
+        setState(() {
+          _isCheckingAuth = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Show loading while checking auth
+    if (_isCheckingAuth) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0D0D14),
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E00FF)),
+          ),
+        ),
+      );
+    }
+
+    // Show get started screen
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D14), // Background gelap
       body: SafeArea(
