@@ -21,6 +21,19 @@ Future<List<AppInfo>> getInstalledApps() async {
   return apps;
 }
 
+/// Get app name from package name
+/// Returns the app name or package name if not found
+Future<String> getAppNameFromPackage(String packageName) async {
+  try {
+    final apps = await getInstalledApps();
+    final app = apps.firstWhereOrNull((app) => app.packageName == packageName);
+    return app?.name ?? packageName;
+  } catch (e) {
+    print('[AppName] Error getting app name for $packageName: $e');
+    return packageName;
+  }
+}
+
 Future<List<AppUsageWithIcon>> getAppUsagesWithIcons() async {
   DateTime endDate = DateTime.now();
   DateTime startDate = endDate.subtract(const Duration(hours: 24));

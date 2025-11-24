@@ -41,16 +41,17 @@ Future<void> _initializeServicesAfterAppStart() async {
     final appName = _readString(event, 'appName');
     if (appName == null) return;
 
+    final appDisplayName = _readString(event, 'appDisplayName') ?? appName;
     final limitMinutes = _readInt(event, 'limitMinutes');
     final usageMinutes = _readInt(event, 'usageMinutes');
-    print('[AppMonitor][Main] Limit reached for $appName: ${usageMinutes ?? '-'} / ${limitMinutes ?? '-'} minutes');
+    print('[AppMonitor][Main] Limit reached for $appDisplayName: ${usageMinutes ?? '-'} / ${limitMinutes ?? '-'} minutes');
 
     await setBlockApp(appName);
-    await overlayService.showCustomOverlay(appName);
+    await overlayService.showCustomOverlay(appDisplayName);
 
     final notificationBody = limitMinutes != null
-        ? '$appName has reached its $limitMinutes minute limit!'
-        : '$appName has reached its usage limit!';
+        ? '$appDisplayName has reached its $limitMinutes minute limit!'
+        : '$appDisplayName has reached its usage limit!';
 
     await notifications.show(
       DateTime.now().millisecondsSinceEpoch % 100000,
