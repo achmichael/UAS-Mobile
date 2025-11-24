@@ -6,7 +6,7 @@ import 'package:app_limiter/core/common/limit_utils.dart';
 import 'package:app_limiter/services/usage_stats_service.dart';
 import 'package:app_limiter_plugin/app_limiter_plugin.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:app_limiter/core/common/app.dart';
+import 'package:installed_apps/installed_apps.dart';
 
 const String appLimiterNotificationChannelId = 'app_limiter_notifications';
 const String appLimitReachedEvent = 'app_limit_reached';
@@ -15,7 +15,6 @@ const _notificationId = 888;
 
 @pragma('vm:entry-point')
 Future<void> initializeService() async {
-  // Request notification permission with error handling
   try {
     final status = await Permission.notification.request();
     print('[AppMonitor] Notification permission status: $status');
@@ -141,19 +140,26 @@ void onStart(ServiceInstance service) async {
         print('Already blocked apps: $blockedApps');
         print('Is $foregroundApp already blocked? ${blockedApps.contains(foregroundApp)}');
         
+        // Get app name for display
+        String displayAppName = foregroundApp;
+        try {
+          final appInfo = await InstalledApps.getAppInfo(foregroundApp);
+          if (appInfo != null) {
+             displayAppName = appInfo.name;
+          }
+        } catch (e) {
+          print('[AppMonitor] Error getting app name for $foregroundApp: $e');
+        }
+        
         if (!blockedApps.contains(foregroundApp)) {
           blockedApps.add(foregroundApp);
           print('🔒 Blocking app: $foregroundApp');
           print('Blocked apps after adding: $blockedApps');
           
-          // Get app name for display
-          final appDisplayName = await getAppNameFromPackage(foregroundApp);
-          print('📱 App display name: $appDisplayName');
           
-          // Show overlay using plugin with app name
           try {
-            print('📱 Calling showCustomOverlay for: $appDisplayName');
-            await overlayPlugin.showCustomOverlay(appDisplayName);
+            print('📱 Calling showCustomOverlay for: $displayAppName ($foregroundApp)');
+            await overlayPlugin.showCustomOverlay(displayAppName);
             print('✅ showCustomOverlay completed successfully');
           } catch (e) {
             print('❌ [AppMonitor] Error showing overlay: $e');
@@ -165,7 +171,7 @@ void onStart(ServiceInstance service) async {
             print('📢 Invoking appLimitReachedEvent');
             service.invoke(appLimitReachedEvent, {
               'appName': foregroundApp,
-              'appDisplayName': appDisplayName,
+              'appDisplayName': displayAppName,
               'limitMinutes': limit,
               'usageMinutes': todayMinutes,
             });
@@ -177,10 +183,8 @@ void onStart(ServiceInstance service) async {
           // App is already blocked but still in foreground - ensure overlay is showing
           print('ℹ️ $foregroundApp already blocked, ensuring overlay is visible...');
           try {
-            // Get app name for display
-            final appDisplayName = await getAppNameFromPackage(foregroundApp);
             // Re-show overlay to ensure it's still visible
-            await overlayPlugin.showCustomOverlay(appDisplayName);
+            await overlayPlugin.showCustomOverlay(displayAppName);
           } catch (e) {
             print('❌ Error re-showing overlay: $e');
           }
