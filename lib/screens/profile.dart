@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:app_limiter/core/constants/app_colors.dart';
-import 'package:app_limiter/core/common/navigation_helper.dart';
 import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:app_limiter/core/common/multipart_fetcher.dart';
 import 'package:app_limiter/components/edit_profile_modal.dart';
@@ -92,9 +91,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _onTabTapped(int index) {
     if (index == 0) {
-      context.navigateToNamed('/dashboard');
+      Navigator.pushNamed(context, '/dashboard');
     } else if (index == 1) {
-      context.navigateToNamed('/limits');
+      Navigator.pushNamed(context, '/limits');
     } else if (index == 2) {
       if (_currentIndex != 2) {
         setState(() {

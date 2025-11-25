@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:app_limiter/core/common/navigation_helper.dart';
 import 'package:app_limiter/core/common/token_manager.dart';
 
 class GetStarted extends StatefulWidget {
@@ -19,7 +18,7 @@ class _GetStartedState extends State<GetStarted> {
   Future<void> _checkLogin() async {
     final token = await TokenManager.instance.getStoredAccessToken();
     if (token != null && mounted) {
-      context.navigateAndRemoveAllNamed('/dashboard');
+      Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
     }
   }
 
@@ -88,7 +87,7 @@ class _GetStartedState extends State<GetStarted> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    context.navigateToNamed('/login');
+                    Navigator.pushNamed(context, '/login');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E00FF),

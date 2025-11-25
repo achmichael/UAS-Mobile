@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:app_limiter/core/constants/app_colors.dart';
-import 'package:app_limiter/core/common/navigation_helper.dart';
 import 'package:app_limiter/core/common/app.dart';
 import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:app_limiter/core/common/limit_utils.dart';
@@ -88,7 +87,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
 
   void _onTabTapped(int index) {
     if (index == 0) {
-      context.navigateToNamed('/dashboard');
+      Navigator.pushNamed(context, '/dashboard');
     } else if (index == 1) {
       if (_currentIndex != 1) {
         setState(() {
@@ -96,7 +95,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
         });
       }
     } else if (index == 2) {
-      context.navigateToNamed('/profile');
+      Navigator.pushNamed(context, '/profile');
     }
   }
 

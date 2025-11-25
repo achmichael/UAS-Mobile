@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:art_sweetalert_new/art_sweetalert_new.dart';
 import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:app_limiter/core/common/context_extensions.dart';
-import 'package:app_limiter/core/common/navigation_helper.dart';
 
 class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
@@ -68,7 +67,7 @@ class _CreateAccountState extends State<CreateAccount> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "App Limiter",
@@ -248,7 +247,7 @@ class _CreateAccountState extends State<CreateAccount> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        context.navigateToNamed('/login');
+                        Navigator.pushNamed(context, '/login');
                       },
                       child: Text(
                         "Sign in",

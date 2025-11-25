@@ -7,7 +7,6 @@ import 'package:app_limiter/components/appbar.dart';
 import 'package:app_limiter/core/common/screen_time.dart';
 import 'package:app_limiter/components/list_item.dart';
 import 'package:app_limiter/components/screen_time_bar.dart';
-import 'package:app_limiter/core/common/navigation_helper.dart';
 import 'package:app_limiter/components/permission_alert.dart';
 
 class Dashboard extends StatefulWidget {
@@ -95,9 +94,9 @@ class _DashboardState extends State<Dashboard> {
         });
       }
     } else if (index == 1) {
-      context.navigateToNamed('/limits');
+      Navigator.pushNamed(context, '/limits');
     } else if (index == 2) {
-      context.navigateToNamed('/profile');
+      Navigator.pushNamed(context, '/profile');
     }
   }
 
