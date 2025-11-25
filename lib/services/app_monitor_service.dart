@@ -159,7 +159,7 @@ void onStart(ServiceInstance service) async {
           
           try {
             print('📱 Calling showCustomOverlay for: $displayAppName ($foregroundApp)');
-            await overlayPlugin.showCustomOverlay(displayAppName);
+            await overlayPlugin.showCustomOverlay(displayAppName, packageName: foregroundApp);
             print('✅ showCustomOverlay completed successfully');
           } catch (e) {
             print('❌ [AppMonitor] Error showing overlay: $e');
@@ -184,7 +184,7 @@ void onStart(ServiceInstance service) async {
           print('ℹ️ $foregroundApp already blocked, ensuring overlay is visible...');
           try {
             // Re-show overlay to ensure it's still visible
-            await overlayPlugin.showCustomOverlay(displayAppName);
+            await overlayPlugin.showCustomOverlay(displayAppName, packageName: foregroundApp);
           } catch (e) {
             print('❌ Error re-showing overlay: $e');
           }

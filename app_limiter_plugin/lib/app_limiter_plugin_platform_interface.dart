@@ -24,7 +24,7 @@ abstract class AppLimiterPluginPlatform extends PlatformInterface {
   }
 
   // Overlay methods
-  Future<void> showCustomOverlay(String appName) {
+  Future<void> showCustomOverlay(String appName, {String? packageName}) {
     throw UnimplementedError('showCustomOverlay() has not been implemented.');
   }
 
@@ -38,6 +38,14 @@ abstract class AppLimiterPluginPlatform extends PlatformInterface {
 
   Future<void> requestOverlayPermission() {
     throw UnimplementedError('requestOverlayPermission() has not been implemented.');
+  }
+
+  Future<bool> hasAccessibilityPermission() {
+    throw UnimplementedError('hasAccessibilityPermission() has not been implemented.');
+  }
+
+  Future<void> requestAccessibilityPermission() {
+    throw UnimplementedError('requestAccessibilityPermission() has not been implemented.');
   }
 
   // Usage Stats methods

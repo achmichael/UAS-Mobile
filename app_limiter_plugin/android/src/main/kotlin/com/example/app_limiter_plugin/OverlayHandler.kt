@@ -49,9 +49,10 @@ class OverlayHandler(private val appContext: Context) {
         when (call.method) {
             "showCustomOverlay" -> {
                 val appName = call.argument<String>("appName")
+                val packageName = call.argument<String>("packageName")
                 if (appName != null) {
-                    Log.d(TAG, "MethodChannel: showCustomOverlay called for: $appName")
-                    showCustomOverlay(appName)
+                    Log.d(TAG, "MethodChannel: showCustomOverlay called for: $appName (package: $packageName)")
+                    showCustomOverlay(appName, packageName)
                     result.success(null)
                 } else {
                     result.error("INVALID_ARGUMENT", "App name is required", null)
@@ -76,6 +77,20 @@ class OverlayHandler(private val appContext: Context) {
                     result.error("NO_ACTIVITY", "Unable to open overlay permission screen without foreground activity", null)
                 }
             }
+            "hasAccessibilityPermission" -> {
+                val hasPermission = hasAccessibilityPermission()
+                Log.d(TAG, "MethodChannel: hasAccessibilityPermission = $hasPermission")
+                result.success(hasPermission)
+            }
+            "requestAccessibilityPermission" -> {
+                Log.d(TAG, "MethodChannel: requestAccessibilityPermission called")
+                val success = requestAccessibilityPermission()
+                if (success) {
+                    result.success(null)
+                } else {
+                    result.error("NO_ACTIVITY", "Unable to open accessibility settings", null)
+                }
+            }
             else -> {
                 result.notImplemented()
             }
@@ -86,7 +101,14 @@ class OverlayHandler(private val appContext: Context) {
      * Show a full-screen blocking overlay
      */
     fun showCustomOverlay(appName: String) {
-        Log.d(TAG, "showCustomOverlay: Starting for app: $appName")
+        showCustomOverlay(appName, null)
+    }
+
+    /**
+     * Show a full-screen blocking overlay with package name for removal from recents
+     */
+    fun showCustomOverlay(appName: String, packageName: String?) {
+        Log.d(TAG, "showCustomOverlay: Starting for app: $appName, package: $packageName")
         
         // Check permission first
         if (!hasOverlayPermission()) {
@@ -129,16 +151,36 @@ class OverlayHandler(private val appContext: Context) {
                     setPadding(32, 32, 32, 32)
                 }
                 
-                // Create button
+                // Create button with improved Cancel functionality
                 val closeButton = Button(appContext).apply {
-                    text = "Close"
+                    text = "Cancel"
                     setOnClickListener {
-                        Log.d(TAG, "Close button clicked, going to home screen")
-                        val homeIntent = Intent(Intent.ACTION_MAIN).apply {
-                            addCategory(Intent.CATEGORY_HOME)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        Log.d(TAG, "Cancel button clicked, removing app from recents and going home")
+                        
+                        // Hapus dari recent apps jika packageName tersedia
+                        if (packageName != null) {
+                            val accessibilityService = AppControlAccessibilityService.getInstance()
+                            if (accessibilityService != null) {
+                                Log.d(TAG, "Calling AccessibilityService to remove $packageName from recents")
+                                accessibilityService.removeTargetAppFromRecents(packageName)
+                            } else {
+                                Log.w(TAG, "AccessibilityService not available, please enable it in Settings")
+                                // Tetap ke home screen meskipun service tidak aktif
+                                val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                                    addCategory(Intent.CATEGORY_HOME)
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                appContext.startActivity(homeIntent)
+                            }
+                        } else {
+                            Log.w(TAG, "Package name not provided, going to home screen only")
+                            val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                                addCategory(Intent.CATEGORY_HOME)
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            appContext.startActivity(homeIntent)
                         }
-                        appContext.startActivity(homeIntent)
+                        
                         hideOverlay()
                     }
                 }
@@ -276,6 +318,56 @@ class OverlayHandler(private val appContext: Context) {
         }
 
         return true
+    }
+
+    /**
+     * Check if accessibility permission is granted
+     */
+    fun hasAccessibilityPermission(): Boolean {
+        val accessibilityManager = appContext.getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
+        val enabledServices = Settings.Secure.getString(
+            appContext.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: ""
+        
+        val serviceName = "${appContext.packageName}/.AppControlAccessibilityService"
+        val hasPermission = enabledServices.contains(serviceName)
+        
+        Log.d(TAG, "hasAccessibilityPermission: $hasPermission (looking for $serviceName)")
+        Log.d(TAG, "hasAccessibilityPermission: Enabled services: $enabledServices")
+        
+        return hasPermission
+    }
+
+    /**
+     * Request accessibility permission from user
+     */
+    fun requestAccessibilityPermission(): Boolean {
+        Log.d(TAG, "requestAccessibilityPermission: Opening accessibility settings")
+        
+        val activity = activityRef.get()
+        if (activity == null) {
+            Log.e(TAG, "requestAccessibilityPermission: No activity attached")
+            // Try dengan app context
+            try {
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                appContext.startActivity(intent)
+                return true
+            } catch (e: Exception) {
+                Log.e(TAG, "requestAccessibilityPermission: Failed to open settings", e)
+                return false
+            }
+        }
+
+        try {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            activity.startActivity(intent)
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "requestAccessibilityPermission: Failed to open settings", e)
+            return false
+        }
     }
 
     /**

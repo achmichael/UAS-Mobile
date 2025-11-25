@@ -3,8 +3,8 @@ import 'app_limiter_plugin_platform_interface.dart';
 
 class AppLimiterPlugin {
   // Overlay methods
-  Future<void> showCustomOverlay(String appName) {
-    return AppLimiterPluginPlatform.instance.showCustomOverlay(appName);
+  Future<void> showCustomOverlay(String appName, {String? packageName}) {
+    return AppLimiterPluginPlatform.instance.showCustomOverlay(appName, packageName: packageName);
   }
 
   Future<void> hideOverlay() {
@@ -17,6 +17,14 @@ class AppLimiterPlugin {
 
   Future<void> requestOverlayPermission() {
     return AppLimiterPluginPlatform.instance.requestOverlayPermission();
+  }
+
+  Future<bool> hasAccessibilityPermission() {
+    return AppLimiterPluginPlatform.instance.hasAccessibilityPermission();
+  }
+
+  Future<void> requestAccessibilityPermission() {
+    return AppLimiterPluginPlatform.instance.requestAccessibilityPermission();
   }
 
   // Usage Stats methods

@@ -27,13 +27,17 @@ class _DashboardState extends State<Dashboard> {
     super.initState();
     _loadAppUsage();
     _checkPermissions();
-    (() async {
-      await requestScreenTimePermission();
-      final result = await getScreenTimeToday();
-      setState(() {
-        screenTime = result;
-      });
-    })();
+    _loadScreenTime();
+  }
+
+  Future<void> _loadScreenTime() async {
+    await requestScreenTimePermission();
+    if (!mounted) return;
+    final result = await getScreenTimeToday();
+    if (!mounted) return;
+    setState(() {
+      screenTime = result;
+    });
   }
 
   Future<void> _checkPermissions() async {
@@ -48,6 +52,7 @@ class _DashboardState extends State<Dashboard> {
   Future<void> _loadAppUsage() async {
     final installedApps = await getAppUsagesWithIcons();
     print('installedApps: $installedApps');
+    if (!mounted) return;
     setState(() {
       apps = installedApps;
     });

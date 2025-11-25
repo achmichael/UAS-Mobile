@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_description">App Limiter needs accessibility permission to remove blocked apps from recent apps when time limit is reached. This helps ensure the app blocker works properly.</string>
+</resources>

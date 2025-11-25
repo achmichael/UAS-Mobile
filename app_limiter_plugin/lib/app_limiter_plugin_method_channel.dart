@@ -19,8 +19,11 @@ class MethodChannelAppLimiterPlugin extends AppLimiterPluginPlatform {
 
   // Overlay methods
   @override
-  Future<void> showCustomOverlay(String appName) async {
-    await overlayChannel.invokeMethod('showCustomOverlay', {'appName': appName});
+  Future<void> showCustomOverlay(String appName, {String? packageName}) async {
+    await overlayChannel.invokeMethod('showCustomOverlay', {
+      'appName': appName,
+      'packageName': packageName,
+    });
   }
 
   @override
@@ -37,6 +40,17 @@ class MethodChannelAppLimiterPlugin extends AppLimiterPluginPlatform {
   @override
   Future<void> requestOverlayPermission() async {
     await overlayChannel.invokeMethod('requestOverlayPermission');
+  }
+
+  @override
+  Future<bool> hasAccessibilityPermission() async {
+    final bool? hasPermission = await overlayChannel.invokeMethod<bool>('hasAccessibilityPermission');
+    return hasPermission ?? false;
+  }
+
+  @override
+  Future<void> requestAccessibilityPermission() async {
+    await overlayChannel.invokeMethod('requestAccessibilityPermission');
   }
 
   // Usage Stats methods

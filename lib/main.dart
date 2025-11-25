@@ -47,7 +47,7 @@ Future<void> _initializeServicesAfterAppStart() async {
     print('[AppMonitor][Main] Limit reached for $appDisplayName: ${usageMinutes ?? '-'} / ${limitMinutes ?? '-'} minutes');
 
     await setBlockApp(appName);
-    await overlayService.showCustomOverlay(appDisplayName);
+    await overlayService.showCustomOverlay(appDisplayName, packageName: appName);
 
     final notificationBody = limitMinutes != null
         ? '$appDisplayName has reached its $limitMinutes minute limit!'
