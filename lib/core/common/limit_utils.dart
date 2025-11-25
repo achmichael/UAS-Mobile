@@ -2,7 +2,7 @@ import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:app_limiter/core/common/token_manager.dart';
 
 
-Future<Map<String, int>> fetchNormalizedLimits() async {
+Future<Map<String, Map<String, dynamic>>> fetchLimitsMap() async {
   try {
     final response = await Fetcher.get(
       '/limits',
@@ -24,7 +24,7 @@ Future<Map<String, int>> fetchNormalizedLimits() async {
       entries = <dynamic>[];
     }
 
-    final normalized = <String, int>{};
+    final normalized = <String, Map<String, dynamic>>{};
 
     for (final entry in entries) {
       if (entry is! Map) continue;
@@ -77,14 +77,21 @@ Future<Map<String, int>> fetchNormalizedLimits() async {
         'duration',
       ]);
 
+      final id = _extractString(mapEntry, const ['_id', 'id']);
+
       if (minutes == null) {
         continue;
       }
 
+      final limitData = {
+        'minutes': minutes,
+        'id': id,
+      };
+
       void addKey(String? key) {
         if (key == null || key.isEmpty) return;
-        normalized[key] = minutes;
-        normalized[key.toLowerCase()] = minutes;
+        normalized[key] = limitData;
+        normalized[key.toLowerCase()] = limitData;
       }
 
       addKey(packageName);
@@ -93,9 +100,15 @@ Future<Map<String, int>> fetchNormalizedLimits() async {
 
     return normalized;
   } catch (_) {
-    return <String, int>{};
+    return <String, Map<String, dynamic>>{};
   }
 }
+
+Future<Map<String, int>> fetchNormalizedLimits() async {
+  final limitsMap = await fetchLimitsMap();
+  return limitsMap.map((key, value) => MapEntry(key, value['minutes'] as int));
+}
+
 
 /// Resolve the configured limit (in minutes) for the given identifiers.
 /// Returns null if no limit is configured.

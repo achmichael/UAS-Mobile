@@ -18,8 +18,8 @@ class _LimitsScreenState extends State<LimitsScreen> {
   int _currentIndex = 1;
   List<AppUsageWithIcon> _apps = [];
   Map<String, bool> _appLimits = {};
-  Map<String, int> _appLimitMinutes =
-      {}; 
+  Map<String, int> _appLimitMinutes = {};
+  Map<String, String> _appLimitIds = {};
   bool _isLoading = true;
 
   @override
@@ -35,21 +35,32 @@ class _LimitsScreenState extends State<LimitsScreen> {
       });
 
       final apps = await getAppUsagesWithIcons();
-      final existingLimits = await fetchNormalizedLimits();
-      print('existingLimits: $existingLimits');
+      final existingLimitsMap = await fetchLimitsMap();
+      print('existingLimits: $existingLimitsMap');
       final updatedLimits = <String, bool>{};
       final updatedLimitMinutes = <String, int>{};
+      final updatedLimitIds = <String, String>{};
 
       for (final app in apps) {
-        final limitMinutes = findLimitMinutesForApp(
-          existingLimits,
-          packageName: app.packageName,
-          displayName: app.appName,
-        );
+        Map<String, dynamic>? limitData;
+        
+        limitData = existingLimitsMap[app.packageName] ?? existingLimitsMap[app.appName];
+        
+        if (limitData == null) {
+             limitData = existingLimitsMap[app.packageName.toLowerCase()] ?? existingLimitsMap[app.appName.toLowerCase()];
+        }
+
+        final limitMinutes = limitData?['minutes'] as int?;
+        final limitId = limitData?['id'] as String?;
+
         final hasLimit = limitMinutes != null;
         updatedLimits[app.packageName] = hasLimit;
         if (limitMinutes != null) {
           _registerAppLimitKeys(app, limitMinutes, target: updatedLimitMinutes);
+        }
+        if (limitId != null) {
+             updatedLimitIds[app.packageName] = limitId;
+             updatedLimitIds[app.appName] = limitId;
         }
       }
 
@@ -58,6 +69,7 @@ class _LimitsScreenState extends State<LimitsScreen> {
         _apps = apps;
         _appLimits = updatedLimits;
         _appLimitMinutes = updatedLimitMinutes;
+        _appLimitIds = updatedLimitIds;
         _isLoading = false;
       });
     } catch (e) {
@@ -117,15 +129,38 @@ class _LimitsScreenState extends State<LimitsScreen> {
         onSave: (minutes) async {
           try {
             print('Setting limit for ${app.appName}: $minutes minutes');
-            await Fetcher.post('/limits', {
+            final response = await Fetcher.post('/limits', {
               'package': app.packageName,
               'limitMinutes': minutes,
               'appName': app.appName,
             });
 
+            String? newId;
+            if (response is Map) {
+              if (response.containsKey('_id')) {
+                newId = response['_id'];
+              } else if (response.containsKey('id')) {
+                newId = response['id'];
+              } else if (response.containsKey('limit')) {
+                final limit = response['limit'];
+                if (limit is Map) {
+                  newId = limit['_id'] ?? limit['id'];
+                }
+              } else if (response.containsKey('data')) {
+                final data = response['data'];
+                if (data is Map) {
+                  newId = data['_id'] ?? data['id'];
+                }
+              }
+            }
+
             setState(() {
               _appLimits[app.packageName] = true;
               _registerAppLimitKeys(app, minutes);
+              if (newId != null) {
+                _appLimitIds[app.packageName] = newId;
+                _appLimitIds[app.appName] = newId;
+              }
             });
 
             if (mounted) {
@@ -162,17 +197,44 @@ class _LimitsScreenState extends State<LimitsScreen> {
       }
     } else {
       // Turn off limit
+      final limitId =
+          _appLimitIds[app.packageName] ?? _appLimitIds[app.appName];
+
+      if (limitId != null) {
+        try {
+          await Fetcher.delete('/limits/$limitId');
+        } catch (e) {
+          print('Error deleting limit: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to remove limit: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          // If delete fails, we might want to revert the toggle or keep it on?
+          // For now, let's assume we still want to update UI but show error.
+          // Or maybe return to keep it ON?
+          // Let's proceed with UI update but warn user.
+        }
+      }
+
       setState(() {
         _appLimits[app.packageName] = false;
         _clearAppLimitKeys(app);
+        _appLimitIds.remove(app.packageName);
+        _appLimitIds.remove(app.appName);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Limit removed for ${app.appName}'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Limit removed for ${app.appName}'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
   }
 
