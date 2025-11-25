@@ -50,16 +50,61 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Future<void> _loadAppUsage() async {
-    final installedApps = await getAppUsagesWithIcons();
-    print('installedApps: $installedApps');
-    
-    // Create apps in backend asynchronously (don't wait for completion)
-    _syncAppsToBackend(installedApps);
-    
-    if (!mounted) return;
-    setState(() {
-      apps = installedApps;
-    });
+    try {
+      // 1. Get local installed apps (for icons and names)
+      final installedApps = await getAppUsagesWithIcons();
+      
+      // 2. Sync apps to backend
+      _syncAppsToBackend(installedApps);
+
+      // 3. Fetch usage stats from server
+      final response = await Fetcher.get('/usage/stats');
+      
+      Map<String, int> serverUsageMap = {};
+      if (response is Map && response['stats'] is List) {
+        for (var item in response['stats']) {
+          if (item['package'] != null && item['durationMinutes'] != null) {
+            serverUsageMap[item['package']] = item['durationMinutes'];
+          }
+        }
+      } else if (response is List) {
+         for (var item in response) {
+          if (item['package'] != null && item['durationMinutes'] != null) {
+            serverUsageMap[item['package']] = item['durationMinutes'];
+          }
+        }
+      }
+
+      // 4. Merge data: Update usage duration from server
+      final updatedApps = installedApps.map((app) {
+        final serverMinutes = serverUsageMap[app.packageName];
+        if (serverMinutes != null) {
+          return (
+            packageName: app.packageName,
+            appName: app.appName,
+            usage: Duration(minutes: serverMinutes),
+            icon: app.icon,
+          );
+        }
+        return app; 
+      }).toList();
+
+      // Sort by usage
+      updatedApps.sort((a, b) => b.usage.compareTo(a.usage));
+
+      if (!mounted) return;
+      setState(() {
+        apps = updatedApps;
+      });
+    } catch (e) {
+      print('Error loading app usage: $e');
+      // Fallback to local data
+      final installedApps = await getAppUsagesWithIcons();
+      if (!mounted) return;
+      setState(() {
+        apps = installedApps;
+      });
+    }
   }
   
   // Sync apps to backend using bulk create endpoint

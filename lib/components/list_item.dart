@@ -31,6 +31,9 @@ class _ListItemState extends State<ListItem> {
 
     if (lowerPackage.contains('game') ||
         lowerPackage.contains('play') ||
+        lowerPackage.contains('mobilelegends') ||
+        lowerPackage.contains('clashofclans') ||
+        lowerPackage.contains('konami') || 
         lowerName.contains('game')) {
       return 'Games';
     }

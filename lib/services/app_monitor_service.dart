@@ -8,6 +8,7 @@ import 'package:app_limiter/services/usage_stats_service.dart';
 import 'package:app_limiter_plugin/app_limiter_plugin.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:installed_apps/installed_apps.dart';
+import 'package:app_limiter/core/common/fetcher.dart';
 
 const String appLimiterNotificationChannelId = 'app_limiter_notifications';
 const String appLimitReachedEvent = 'app_limit_reached';
@@ -91,20 +92,39 @@ void onStart(ServiceInstance service) async {
   service.on('stop').listen((event) => service.stopSelf());
 
   final Set<String> blockedApps = {};
+  String? lastForegroundApp;
   
   print('[AppMonitor] Starting monitoring loop...');
 
   Timer.periodic(const Duration(seconds: 1), (timer) async {
     try {
       final limitsByKey = await _fetchLimits();
-      print('limitsByKey: $limitsByKey');
+      // print('limitsByKey: $limitsByKey');
+
+      final foregroundApp = await usageStatsService.getCurrentForegroundApp();
+      // print('foregroundApp: $foregroundApp');
+
+      // Handle usage tracking (Start/End)
+      if (foregroundApp != lastForegroundApp) {
+        // App changed
+        if (lastForegroundApp != null && lastForegroundApp!.isNotEmpty) {
+          // End usage for previous app
+          _endUsage(lastForegroundApp!);
+        }
+
+        if (foregroundApp != null && foregroundApp.isNotEmpty) {
+          // Start usage for new app
+          _startUsage(foregroundApp);
+        }
+
+        lastForegroundApp = foregroundApp;
+      }
+
       if (limitsByKey.isEmpty) {
         blockedApps.clear();
         return;
       }
 
-      final foregroundApp = await usageStatsService.getCurrentForegroundApp();
-      print('foregroundApp: $foregroundApp');
       if (foregroundApp == null || foregroundApp.isEmpty) return;
 
       // IMPORTANT: Don't block the App Limiter app itself!
@@ -225,4 +245,22 @@ void onStart(ServiceInstance service) async {
 
 Future<Map<String, int>> _fetchLimits() async {
   return await fetchNormalizedLimits();
+}
+
+Future<void> _startUsage(String packageName) async {
+  try {
+    print('[AppMonitor] Starting usage for $packageName');
+    await Fetcher.post('/usage/start', {'package': packageName});
+  } catch (e) {
+    print('[AppMonitor] Error starting usage for $packageName: $e');
+  }
+}
+
+Future<void> _endUsage(String packageName) async {
+  try {
+    print('[AppMonitor] Ending usage for $packageName');
+    await Fetcher.post('/usage/end', {'package': packageName});
+  } catch (e) {
+    print('[AppMonitor] Error ending usage for $packageName: $e');
+  }
 }
