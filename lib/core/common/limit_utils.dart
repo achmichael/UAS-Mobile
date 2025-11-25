@@ -32,14 +32,36 @@ Future<Map<String, int>> fetchNormalizedLimits() async {
         entry.map((key, value) => MapEntry(key.toString(), value)),
       );
 
-      final packageName = _extractString(mapEntry, const [
-        'packageName',
+      // Extract app object from response
+      final appData = mapEntry['app'] ?? mapEntry['appId'];
+      final appMap = appData is Map ? Map<String, dynamic>.from(appData) : null;
+
+      // Get package name from app object
+      String? packageName;
+      String? displayName;
+      
+      if (appMap != null) {
+        packageName = _extractString(appMap, const [
+          'package',
+          'packageName',
+        ]);
+        
+        displayName = _extractString(appMap, const [
+          'name',
+          'displayName',
+          'appName',
+        ]);
+      }
+
+      // Fallback to old structure for backward compatibility
+      packageName ??= _extractString(mapEntry, const [
         'package',
+        'packageName',
         'appPackage',
         'appName',
       ]);
 
-      final displayName = _extractString(mapEntry, const [
+      displayName ??= _extractString(mapEntry, const [
         'displayName',
         'appLabel',
         'title',

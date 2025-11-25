@@ -116,10 +116,11 @@ class _LimitsScreenState extends State<LimitsScreen> {
         initialMinutes: initialMinutes,
         onSave: (minutes) async {
           try {
+            print('Setting limit for ${app.appName}: $minutes minutes');
             await Fetcher.post('/limits', {
-              'appName': app.packageName,
-              'displayName': app.appName,
+              'package': app.packageName,
               'limitMinutes': minutes,
+              'appName': app.appName,
             });
 
             setState(() {

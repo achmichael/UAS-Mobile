@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:app_limiter/core/common/limit_utils.dart';
+import 'package:app_limiter/core/common/app.dart';
 import 'package:app_limiter/services/usage_stats_service.dart';
 import 'package:app_limiter_plugin/app_limiter_plugin.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -156,6 +157,16 @@ void onStart(ServiceInstance service) async {
           print('🔒 Blocking app: $foregroundApp');
           print('Blocked apps after adding: $blockedApps');
           
+          // Block app in backend
+          try {
+            final appData = await getAppByPackage(foregroundApp);
+            if (appData != null && appData['_id'] != null) {
+              await blockAppInBackend(appData['_id']);
+              print('✅ App blocked in backend: ${appData['_id']}');
+            }
+          } catch (e) {
+            print('❌ Error blocking app in backend: $e');
+          }
           
           try {
             print('📱 Calling showCustomOverlay for: $displayAppName ($foregroundApp)');

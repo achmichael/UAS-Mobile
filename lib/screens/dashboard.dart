@@ -2,6 +2,7 @@ import 'package:app_limiter/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:app_limiter/types/entities.dart';
 import 'package:app_limiter/core/common/app.dart';
+import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:app_limiter/components/appbar.dart';
 import 'package:app_limiter/core/common/screen_time.dart';
 import 'package:app_limiter/components/list_item.dart';
@@ -52,10 +53,38 @@ class _DashboardState extends State<Dashboard> {
   Future<void> _loadAppUsage() async {
     final installedApps = await getAppUsagesWithIcons();
     print('installedApps: $installedApps');
+    
+    // Create apps in backend asynchronously (don't wait for completion)
+    _syncAppsToBackend(installedApps);
+    
     if (!mounted) return;
     setState(() {
       apps = installedApps;
     });
+  }
+  
+  // Sync apps to backend using bulk create endpoint
+  Future<void> _syncAppsToBackend(List<AppUsageWithIcon> apps) async {
+    if (apps.isEmpty) return;
+    
+    try {
+      // Prepare apps array for bulk request
+      final appsData = apps.map((app) => {
+        'name': app.appName,
+        'package': app.packageName,
+        'icon': '', // Empty string for icon
+      }).toList();
+      
+      // Send bulk create request
+      await Fetcher.post('/apps/bulk', {
+        'apps': appsData,
+      });
+      
+      print('✅ Successfully synced ${apps.length} apps to backend');
+    } catch (e) {
+      print('❌ Error syncing apps to backend: $e');
+      // Silently fail, don't disrupt user experience
+    }
   }
 
   void _onTabTapped(int index) {
@@ -83,7 +112,7 @@ class _DashboardState extends State<Dashboard> {
       ),
       body: Column(
         children: [
-          ScreenTimeBar(screenTime: screenTime),
+          // ScreenTimeBar(screenTime: screenTime),
           Expanded(child: ListItem(items: apps)),
         ],
       ),

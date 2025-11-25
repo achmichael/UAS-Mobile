@@ -5,6 +5,7 @@ import 'package:app_limiter/core/common/navigation_helper.dart';
 import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:app_limiter/core/common/multipart_fetcher.dart';
 import 'package:app_limiter/components/edit_profile_modal.dart';
+import 'package:app_limiter/core/common/token_manager.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -152,10 +153,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop();
-                // Add logout logic here
-                print('User logged out');
+                await TokenManager.instance.clearTokens();
+                if (context.mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                }
               },
               child: const Text(
                 'Logout',

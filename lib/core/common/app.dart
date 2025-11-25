@@ -1,5 +1,6 @@
 import 'package:app_limiter/components/overlay.dart';
 import 'package:app_limiter/core/common/app_usage.dart';
+import 'package:app_limiter/core/common/fetcher.dart';
 import 'package:app_limiter/types/entities.dart';
 import 'package:app_usage/app_usage.dart';
 import 'package:installed_apps/app_info.dart';
@@ -62,6 +63,62 @@ Future<List<AppUsageWithIcon>> getAppUsagesWithIcons() async {
   }
 
   return merged;
+}
+
+/// Create app in backend database
+/// Call this after successfully loading apps
+Future<void> createAppInBackend({
+  required String name,
+  required String packageName,
+  String? icon,
+}) async {
+  try {
+    // Check if app already exists
+    final existingApp = await getAppByPackage(packageName);
+    if (existingApp != null) {
+      print('[CreateApp] App already exists: $name ($packageName)');
+      return;
+    }
+    
+    print('[CreateApp] Creating app in backend: $name ($packageName)');
+    await Fetcher.post('/apps', {
+      'name': name,
+      'package': packageName,
+      'icon': icon ?? '',
+    });
+    print('[CreateApp] Successfully created app: $name');
+  } catch (e) {
+    print('[CreateApp] Error creating app in backend: $e');
+    // Don't throw error, just log it
+  }
+}
+
+/// Block app via backend API
+/// This should be called when app reaches limit
+Future<void> blockAppInBackend(String appId) async {
+  try {
+    print('[BlockApp] Blocking app in backend: $appId');
+    await Fetcher.patch('/apps/$appId/block', {
+      'isBlocked': true,
+    });
+    print('[BlockApp] Successfully blocked app in backend: $appId');
+  } catch (e) {
+    print('[BlockApp] Error blocking app in backend: $e');
+    // Don't throw error, just log it
+  }
+}
+
+/// Get app info from backend by package name
+Future<Map<String, dynamic>?> getAppByPackage(String packageName) async {
+  try {
+    print('[GetApp] Getting app from backend: $packageName');
+    final response = await Fetcher.get('/apps/package/$packageName');
+    print('[GetApp] Response: $response');
+    return response as Map<String, dynamic>?;
+  } catch (e) {
+    print('[GetApp] Error getting app from backend: $e');
+    return null;
+  }
 }
 
 /// Block app when it reaches the usage limit

@@ -4,7 +4,7 @@ import 'package:app_limiter/core/common/token_manager.dart';
 
 class Fetcher {
   static const String baseUrl =
-      "https://uas-mobile.achmichael.my.id/api"; // ganti sesuai backend kamu
+      "http://10.90.34.205:5000/api";
 
   static Future<dynamic> get(
     String endpoint, {
@@ -36,6 +36,20 @@ class Fetcher {
   }) async {
     final url = Uri.parse('$baseUrl$endpoint');
     final response = await http.put(
+      url,
+      headers: _defaultHeaders(headers),
+      body: jsonEncode(body),
+    );
+    return _handleResponse(response);
+  }
+
+  static Future<dynamic> patch(
+    String endpoint,
+    Map<String, dynamic> body, {
+    Map<String, String>? headers,
+  }) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    final response = await http.patch(
       url,
       headers: _defaultHeaders(headers),
       body: jsonEncode(body),
