@@ -59,24 +59,17 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
 
-  print('[AppMonitor] ========== SERVICE STARTED ==========');
 
   final usageStatsService = UsageStatsService();
   final overlayPlugin = AppLimiterPlugin();
   
-  // Check overlay permission at service start
   try {
-    final hasOverlayPermission = await overlayPlugin.hasOverlayPermission();
-    print('[AppMonitor] Overlay permission status: $hasOverlayPermission');
-    
+    final hasOverlayPermission = await overlayPlugin.hasOverlayPermission();    
     if (!hasOverlayPermission) {
-      print('[AppMonitor] ⚠️ WARNING: Overlay permission not granted!');
-      print('[AppMonitor] Please grant overlay permission in app settings');
     } else {
       print('[AppMonitor] ✅ Overlay permission granted');
     }
   } catch (e) {
-    print('[AppMonitor] ❌ Error checking overlay permission: $e');
   }
   
   if (service is AndroidServiceInstance) {
@@ -85,7 +78,6 @@ void onStart(ServiceInstance service) async {
       content: 'Monitoring usage...',
     );
     
-    // Set notification with icon
     service.setAsForegroundService();
   }
 
@@ -99,21 +91,15 @@ void onStart(ServiceInstance service) async {
   Timer.periodic(const Duration(seconds: 1), (timer) async {
     try {
       final limitsByKey = await _fetchLimits();
-      // print('limitsByKey: $limitsByKey');
 
       final foregroundApp = await usageStatsService.getCurrentForegroundApp();
-      // print('foregroundApp: $foregroundApp');
 
-      // Handle usage tracking (Start/End)
       if (foregroundApp != lastForegroundApp) {
-        // App changed
         if (lastForegroundApp != null && lastForegroundApp!.isNotEmpty) {
-          // End usage for previous app
           _endUsage(lastForegroundApp!);
         }
 
         if (foregroundApp != null && foregroundApp.isNotEmpty) {
-          // Start usage for new app
           _startUsage(foregroundApp);
         }
 
@@ -127,16 +113,12 @@ void onStart(ServiceInstance service) async {
 
       if (foregroundApp == null || foregroundApp.isEmpty) return;
 
-      // IMPORTANT: Don't block the App Limiter app itself!
       if (foregroundApp == 'com.example.app_limiter') {
-        print('[AppMonitor] ⚠️ Skipping - cannot block App Limiter itself!');
-        // Remove from blocked list if it was added by mistake
         if (blockedApps.contains(foregroundApp)) {
           blockedApps.remove(foregroundApp);
           try {
             await overlayPlugin.hideOverlay();
           } catch (e) {
-            print('[AppMonitor] Error hiding overlay: $e');
           }
         }
         return;
@@ -147,21 +129,13 @@ void onStart(ServiceInstance service) async {
         packageName: foregroundApp,
       );
 
-      print('limit app: $limit');
 
       if (limit == null) return;
 
       final todayMinutes = await usageStatsService.getAppUsageToday(foregroundApp);
 
-      print('todayMinutes: $todayMinutes');
-      print('[AppMonitor] Comparison: $todayMinutes >= $limit = ${todayMinutes >= limit}');
       
       if (todayMinutes >= limit) {
-        print('⚠️ App limit reached for duration $foregroundApp');
-        print('Already blocked apps: $blockedApps');
-        print('Is $foregroundApp already blocked? ${blockedApps.contains(foregroundApp)}');
-        
-        // Get app name for display
         String displayAppName = foregroundApp;
         try {
           final appInfo = await InstalledApps.getAppInfo(foregroundApp);
@@ -174,47 +148,36 @@ void onStart(ServiceInstance service) async {
         
         if (!blockedApps.contains(foregroundApp)) {
           blockedApps.add(foregroundApp);
-          print('🔒 Blocking app: $foregroundApp');
-          print('Blocked apps after adding: $blockedApps');
           
           // Block app in backend
           try {
             final appData = await getAppByPackage(foregroundApp);
             if (appData != null && appData['_id'] != null) {
               await blockAppInBackend(appData['_id']);
-              print('✅ App blocked in backend: ${appData['_id']}');
             }
           } catch (e) {
             print('❌ Error blocking app in backend: $e');
           }
           
           try {
-            print('📱 Calling showCustomOverlay for: $displayAppName ($foregroundApp)');
             await overlayPlugin.showCustomOverlay(displayAppName, packageName: foregroundApp);
-            print('✅ showCustomOverlay completed successfully');
           } catch (e) {
-            print('❌ [AppMonitor] Error showing overlay: $e');
             print('Stack trace: ${StackTrace.current}');
           }
           
           // Invoke event to notify main app
           try {
-            print('📢 Invoking appLimitReachedEvent');
             service.invoke(appLimitReachedEvent, {
               'appName': foregroundApp,
               'appDisplayName': displayAppName,
               'limitMinutes': limit,
               'usageMinutes': todayMinutes,
             });
-            print('✅ Event invoked successfully');
           } catch (e) {
             print('❌ Error invoking event: $e');
           }
         } else {
-          // App is already blocked but still in foreground - ensure overlay is showing
-          print('ℹ️ $foregroundApp already blocked, ensuring overlay is visible...');
           try {
-            // Re-show overlay to ensure it's still visible
             await overlayPlugin.showCustomOverlay(displayAppName, packageName: foregroundApp);
           } catch (e) {
             print('❌ Error re-showing overlay: $e');
@@ -234,11 +197,9 @@ void onStart(ServiceInstance service) async {
           service.invoke(appUnblockedEvent, {
             'appName': foregroundApp,
           });
-          print('[AppMonitor] App unblocked: $foregroundApp');
         }
       }
     } catch (e) {
-      print('[AppMonitor] Error in monitoring loop: $e');
     }
   });
 }
@@ -249,18 +210,14 @@ Future<Map<String, int>> _fetchLimits() async {
 
 Future<void> _startUsage(String packageName) async {
   try {
-    print('[AppMonitor] Starting usage for $packageName');
     await Fetcher.post('/usage/start', {'package': packageName});
   } catch (e) {
-    print('[AppMonitor] Error starting usage for $packageName: $e');
   }
 }
 
 Future<void> _endUsage(String packageName) async {
   try {
-    print('[AppMonitor] Ending usage for $packageName');
     await Fetcher.post('/usage/end', {'package': packageName});
   } catch (e) {
-    print('[AppMonitor] Error ending usage for $packageName: $e');
   }
 }

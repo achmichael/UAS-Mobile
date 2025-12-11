@@ -33,8 +33,6 @@ class _GetStartedState extends State<GetStarted> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const SizedBox(height: 20), // sedikit spasi atas
-
-              // Bagian tengah (ikon + teks)
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -52,8 +50,6 @@ class _GetStartedState extends State<GetStarted> {
                     ),
                   ),
                   const SizedBox(height: 40),
-
-                  // Judul
                   const Text(
                     "Take control of your screen time.",
                     textAlign: TextAlign.center,
@@ -81,8 +77,6 @@ class _GetStartedState extends State<GetStarted> {
                   ),
                 ],
               ),
-
-              // Tombol di bawah
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

@@ -41,23 +41,18 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Future<void> _checkPermissions() async {
-    // Wait a bit for the UI to be ready
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     
-    // Check and request permissions using new dialog
     await checkAndRequestAllPermissions(context);
   }
 
   Future<void> _loadAppUsage() async {
     try {
-      // 1. Get local installed apps (for icons and names)
       final installedApps = await getAppUsagesWithIcons();
       
-      // 2. Sync apps to backend
       _syncAppsToBackend(installedApps);
 
-      // 3. Fetch usage stats from server
       final response = await Fetcher.get('/usage/stats');
       
       Map<String, int> serverUsageMap = {};
@@ -75,7 +70,6 @@ class _DashboardState extends State<Dashboard> {
         }
       }
 
-      // 4. Merge data: Update usage duration from server
       final updatedApps = installedApps.map((app) {
         final serverMinutes = serverUsageMap[app.packageName];
         if (serverMinutes != null) {
@@ -89,7 +83,6 @@ class _DashboardState extends State<Dashboard> {
         return app; 
       }).toList();
 
-      // Sort by usage
       updatedApps.sort((a, b) => b.usage.compareTo(a.usage));
 
       if (!mounted) return;
@@ -98,7 +91,6 @@ class _DashboardState extends State<Dashboard> {
       });
     } catch (e) {
       print('Error loading app usage: $e');
-      // Fallback to local data
       final installedApps = await getAppUsagesWithIcons();
       if (!mounted) return;
       setState(() {
@@ -107,19 +99,16 @@ class _DashboardState extends State<Dashboard> {
     }
   }
   
-  // Sync apps to backend using bulk create endpoint
   Future<void> _syncAppsToBackend(List<AppUsageWithIcon> apps) async {
     if (apps.isEmpty) return;
     
     try {
-      // Prepare apps array for bulk request
       final appsData = apps.map((app) => {
         'name': app.appName,
         'package': app.packageName,
-        'icon': '', // Empty string for icon
+        'icon': '', 
       }).toList();
       
-      // Send bulk create request
       await Fetcher.post('/apps/bulk', {
         'apps': appsData,
       });

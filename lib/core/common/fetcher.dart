@@ -4,7 +4,7 @@ import 'package:app_limiter/core/common/token_manager.dart';
 
 class Fetcher {
   static const String baseUrl =
-      "http://10.90.34.205:5000/api";
+      "https://uas-mobile.achmichael.my.id/api";
 
   static Future<dynamic> get(
     String endpoint, {

@@ -202,13 +202,13 @@ Pastikan permission ini sudah ditambahkan di `AndroidManifest.xml`
 **Nama**: Achmad Michael Mushoharaoin  
 **NIM**: 230605110047  
 **Mata Kuliah**: Praktikum Mobile Programming  
-**Tugas**: UTS - Flutter Application
+**Tugas**: UAS - Flutter Application
 
 ---
 
 ## 📄 License
 
-This project is created for educational purposes as part of UTS assignment.
+This project is created for educational purposes as part of UAS assignment.
 
 ---
 
