@@ -119,12 +119,32 @@ flutter devices
 flutter run -d <device-id>
 ```
 
-#### 5️⃣ Build APK (Optional)
-Untuk membuat file APK:
+---
+
+## 🛠️ Panduan Build Release
+
+Berikut adalah langkah-langkah untuk membuat file aplikasi siap pakai (production ready).
+
+### 1. Build APK (Android)
+Gunakan perintah ini untuk membuat file `.apk` yang bisa diinstal manual di HP Android.
 ```bash
 flutter build apk --release
 ```
-File APK akan tersedia di: `build/app/outputs/flutter-apk/app-release.apk`
+📂 **Output:** `build/app/outputs/flutter-apk/app-release.apk`
+
+### 2. Build App Bundle (Android)
+Format `.aab` direkomendasikan jika ingin upload ke Google Play Store.
+```bash
+flutter build appbundle --release
+```
+📂 **Output:** `build/app/outputs/bundle/release/app-release.aab`
+
+### 3. Build iOS (Khusus macOS)
+Untuk pengguna macOS yang ingin build ke iPhone/iPad.
+```bash
+flutter build ios --release
+```
+⚠️ **Note:** Perlu membuka Xcode untuk proses Archive & Upload ke App Store.
 
 ---
 
